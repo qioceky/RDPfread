@@ -10,10 +10,24 @@ $script:RdpTag = "RDPfread:keepalive"
 . (Join-Path $PSScriptRoot "lib-common.ps1")
 $here = $PSScriptRoot
 
-$expStr = Get-StatusValue "expires_at"
-$exp = $null
-if ($expStr) { try { $exp = [DateTime]::Parse([string]$expStr).ToUniversalTime() } catch { } }
-if (-not $exp) { $exp = (Get-Date).ToUniversalTime().AddMinutes(335) }
+# Baca expires_at sebagai UTC murni (lihat ConvertTo-UtcDateTime di lib-common -
+# jangan pakai [DateTime]::Parse + ToUniversalTime: hasilnya bergeser seoffset
+# timezone lokal VM dan pernah mematikan sesi dalam 0 detik di v1.0.0).
+$exp = Get-StatusUtc "expires_at"
+$started = Get-StatusUtc "started_at"
+$nowUtc = (Get-Date).ToUniversalTime()
+if (-not $exp -or $exp -le $nowUtc) {
+    # Pengaman anti-mati-seketika: hitung ulang dari started_at + durasi, atau dari sekarang.
+    $durMin = 342
+    if ($env:DUR -match "^\d+$") { $durMin = [int]$env:DUR }
+    if ($started -and $started.AddMinutes($durMin) -gt $nowUtc) {
+        $exp = $started.AddMinutes($durMin)
+        Write-Warn "expires_at terbaca tidak wajar - dihitung ulang dari started_at + $durMin menit."
+    } else {
+        $exp = $nowUtc.AddMinutes($durMin)
+        Write-Warn "expires_at tidak terbaca - memakai sekarang + $durMin menit."
+    }
+}
 $leadMin = 20
 if ($env:HANDOVER_LEAD_MIN -match "^\d+$") { $leadMin = [int]$env:HANDOVER_LEAD_MIN }
 $stop = $exp.AddMinutes(-3)

@@ -63,7 +63,7 @@ Write-Log "Firewall RDP dibatasi hanya dari 100.64.0.0/10 (tailnet)."
 
 # --- File info koneksi di folder kerja + Public Desktop ---
 $user = Get-StatusValue "rdp_user"
-$expires = Get-StatusValue "expires_at"
+$expires = Format-StatusValue (Get-StatusValue "expires_at")
 $info = @"
 RDPfread - info koneksi
 =======================

@@ -30,3 +30,7 @@ Perapihan total dari versi awal RDPfread (satu file workflow, dibuat 2026-10-10)
 19. **Tweak Windows otomatis** — power plan High Performance tanpa sleep, Explorer menampilkan ekstensi & file tersembunyi (hive Default User), long paths, redirection clipboard/drive/audio RDP, shortcut folder persisten di desktop.
 20. **File koneksi `.rdp` siap klik** — artifact `rdpfread-connection` per run; tanpa password di dalamnya (mstsc/Windows App yang menanyakan).
 21. **OpenSSH Server Windows opsional** — input `akses_ssh=ya`: jalur terminal PowerShell ke Windows dari Termux/HP, akun & password sama dengan RDP, firewall tetap khusus tailnet dan rule bawaan yang terbuka dimatikan.
+
+## Perbaikan v1.0.1 (dari temuan Run pertama, 2026-10-20)
+22. **Fix keepalive mati 0 detik** — `ConvertFrom-Json` PowerShell 7 mengubah string tanggal ISO jadi DateTime lokal; setelah timezone VM diganti, jam berakhir UTC bergeser -7 jam sehingga sesi dianggap sudah habis. Sekarang semua tanggal status dibaca sebagai UTC murni (`Get-StatusUtc`) + pengaman hitung-ulang dari `started_at`, dan format tampilan tanggal dikembalikan ke ISO UTC. Teruji di zona Jakarta/UTC/New York.
+23. **Fix publish status & cleanup ke-skip** — workflow kini menyetel `GITHUB_TOKEN` (sebelumnya hanya `GH_TOKEN`) yang dibaca script publish-status, cleanup, dan dispatch handover.

@@ -17,7 +17,7 @@ if ([string]::IsNullOrWhiteSpace($token) -or [string]::IsNullOrWhiteSpace($env:G
 
 Ensure-OutDir
 $s = Read-Status
-function V { param([string]$N) if ($s.PSObject.Properties.Name -contains $N -and $s.$N -ne $null) { return [string]$s.$N } return "-" }
+function V { param([string]$N) if ($s.PSObject.Properties.Name -contains $N -and $s.$N -ne $null) { return (Format-StatusValue $s.$N) } return "-" }
 function VT { param([string]$N) if ($s.tools -and ($s.tools.PSObject.Properties.Name -contains $N)) { return [string]$s.tools.$N } return "-" }
 
 $md = @"

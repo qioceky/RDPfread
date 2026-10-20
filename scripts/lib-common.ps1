@@ -46,6 +46,35 @@ function Get-StatusValue {
     return $null
 }
 
+# PENTING (bug v1.0.0): ConvertFrom-Json di PowerShell 7 mengubah string tanggal ISO
+# menjadi objek [DateTime] LOKAL (jam dinding dipertahankan, zona dibuang). Nilai
+# expires_at kita adalah UTC - jadi nilai DateTime hasil baca harus dianggap UTC
+# apa adanya (SpecifyKind Utc), BUKAN dikonversi dari zona lokal mesin. Tanpa ini,
+# setelah timezone VM diganti ke Asia/Jakarta, jam berakhir bergeser -7 jam dan
+# keepalive mengira sesi sudah habis.
+function ConvertTo-UtcDateTime {
+    param($Value)
+    if ($null -eq $Value) { return $null }
+    if ($Value -is [DateTime]) { return [DateTime]::SpecifyKind($Value, [DateTimeKind]::Utc) }
+    $styles = [System.Globalization.DateTimeStyles]::AdjustToUniversal -bor [System.Globalization.DateTimeStyles]::AssumeUniversal
+    try { return [DateTime]::Parse([string]$Value, [System.Globalization.CultureInfo]::InvariantCulture, $styles) }
+    catch { return $null }
+}
+
+function Get-StatusUtc {
+    param([string]$Name)
+    return (ConvertTo-UtcDateTime (Get-StatusValue $Name))
+}
+
+# Format nilai status untuk ditampilkan: DateTime hasil baca JSON ditampilkan
+# kembali sebagai ISO UTC (bukan format lokal seperti 10/20/2026 ...).
+function Format-StatusValue {
+    param($Value)
+    if ($null -eq $Value) { return "-" }
+    if ($Value -is [DateTime]) { return $Value.ToString("yyyy-MM-ddTHH:mm:ssZ") }
+    return [string]$Value
+}
+
 # Nama node Tailscale konsisten: <prefix>-<nomor run>, sama pola dengan QVPS.
 function Get-RdpHostname {
     $base = ($env:RDP_HOST -replace "[^a-zA-Z0-9-]", "").ToLower().Trim("-")

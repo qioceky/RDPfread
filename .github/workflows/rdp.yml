@@ -88,6 +88,7 @@ jobs:
       NOTIFY_WEBHOOK_URL: ${{ secrets.NOTIFY_WEBHOOK_URL }}
       CLEANUP_TOKEN: ${{ secrets.CLEANUP_TOKEN }}
       GH_TOKEN: ${{ github.token }}
+      GITHUB_TOKEN: ${{ github.token }}
 
     steps:
       - name: Checkout repository
@@ -132,7 +133,9 @@ jobs:
         run: |
           ./scripts/publish-status.ps1 -Active true
           $s = Get-Content out/rdp-status.json -Raw | ConvertFrom-Json
-          ./scripts/notify.ps1 -Event ready -Message "RDPfread siap | RDP ke $($s.tailscale_ip) user $($s.rdp_user) | berakhir $($s.expires_at) UTC | preset $($s.preset)"
+          $expTxt = $s.expires_at
+          if ($expTxt -is [datetime]) { $expTxt = $expTxt.ToString("yyyy-MM-ddTHH:mm:ssZ") }
+          ./scripts/notify.ps1 -Event ready -Message "RDPfread siap | RDP ke $($s.tailscale_ip) user $($s.rdp_user) | berakhir $expTxt UTC | preset $($s.preset)"
 
       - name: Buat file koneksi .rdp siap klik
         continue-on-error: true
