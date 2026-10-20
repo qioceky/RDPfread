@@ -9,11 +9,11 @@ $dl = Join-Path $ws "out\download"
 if (Test-Path $dl) { Remove-Item $dl -Recurse -Force }
 New-Item -ItemType Directory -Path $dl -Force | Out-Null
 
-$gh = Get-Command gh -ErrorAction SilentlyContinue
-if (-not $gh -or -not $env:GITHUB_REPOSITORY) { Write-Log "gh/repo tidak tersedia - restore dilewati."; return }
+$gh = Get-GhExe
+if (-not $gh -or -not $env:GITHUB_REPOSITORY) { Write-Log "gh/repo tidak tersedia - restore dilewati."; $global:LASTEXITCODE = 0; return }
 if (-not $env:GH_TOKEN) { $env:GH_TOKEN = $env:GITHUB_TOKEN }
 
-gh release download rdpfread-state-latest --repo $env:GITHUB_REPOSITORY --pattern "rdpfread-state*" --dir $dl 2>$null | Out-Null
+& $gh release download rdpfread-state-latest --repo $env:GITHUB_REPOSITORY --pattern "rdpfread-state*" --dir $dl 2>$null | Out-Null
 $file = Get-ChildItem $dl -File -ErrorAction SilentlyContinue | Select-Object -First 1
 if (-not $file) { Write-Log "Belum ada state tersimpan - sesi mulai dari bersih."; $global:LASTEXITCODE = 0; return }
 Write-Log ("State ditemukan: {0} ({1:N0} bytes)" -f $file.Name, $file.Length)

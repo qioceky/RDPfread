@@ -48,15 +48,17 @@ try {
     if (-not (Test-Path (Join-Path $work "rdp-status.json"))) { "{}" | Set-Content (Join-Path $work "rdp-status.json") }
     $md | Set-Content -Path (Join-Path $work "STATUS.md") -Encoding UTF8
 
+    $git = Get-GitExe
+    if (-not $git) { Write-Warn "git tidak ditemukan (path standar maupun PATH) - publish status dilewati."; return }
     Push-Location $work
-    git init -q 2>$null
-    git config user.email "rdpfread@users.noreply.github.com"
-    git config user.name "RDPfread Bot"
-    git add rdp-status.json STATUS.md 2>$null
-    git commit -qm ("status: " + (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")) 2>$null
+    & $git init -q 2>$null
+    & $git config user.email "rdpfread@users.noreply.github.com"
+    & $git config user.name "RDPfread Bot"
+    & $git add rdp-status.json STATUS.md 2>$null
+    & $git commit -qm ("status: " + (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")) 2>$null
     if ($LASTEXITCODE -eq 0) {
         $url = "https://x-access-token:{0}@github.com/{1}.git" -f $token, $env:GITHUB_REPOSITORY
-        git push -q --force $url HEAD:status 2>$null
+        & $git push -q --force $url HEAD:status 2>$null
         if ($LASTEXITCODE -eq 0) { Write-Log "Status terpublikasi ke branch status." }
         else { Write-Warn "Push branch status gagal - dilewati." }
     } else { Write-Log "Tidak ada perubahan status." }

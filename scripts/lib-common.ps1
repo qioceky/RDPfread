@@ -102,3 +102,29 @@ function Get-TailscaleExe {
     if ($cmd) { return $cmd.Source }
     return $null
 }
+
+# Resolusi executable penting lewat path penuh dulu, PATH belakangan - pelajaran
+# insiden 2026-10-20: di satu VM windows-2025, git/gh/tailscale mendadak tidak
+# terlacak lewat PATH di tengah sesi (publish & upload state mati berjam-jam).
+function Get-GitExe {
+    $candidates = @(
+        "C:\Program Files\Git\cmd\git.exe",
+        "C:\Program Files\Git\bin\git.exe",
+        "C:\Program Files (x86)\Git\cmd\git.exe"
+    )
+    foreach ($c in $candidates) { if (Test-Path $c) { return $c } }
+    $cmd = Get-Command git.exe -ErrorAction SilentlyContinue
+    if ($cmd) { return $cmd.Source }
+    return $null
+}
+
+function Get-GhExe {
+    $candidates = @(
+        "C:\Program Files\GitHub CLI\gh.exe",
+        "C:\Program Files (x86)\GitHub CLI\gh.exe"
+    )
+    foreach ($c in $candidates) { if (Test-Path $c) { return $c } }
+    $cmd = Get-Command gh.exe -ErrorAction SilentlyContinue
+    if ($cmd) { return $cmd.Source }
+    return $null
+}

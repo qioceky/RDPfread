@@ -84,14 +84,14 @@ Write-Log ("State tersimpan lokal: {0} ({1:N0} bytes, encrypted={2})" -f (Split-
 if ($bytes -gt 1900MB) { Write-Warn "Arsip > 1,9 GB - upload Release dilewati (artifact tetap dicoba dari workflow)."; return }
 
 # --- Upload ke Release tetap ---
-$gh = Get-Command gh -ErrorAction SilentlyContinue
+$gh = Get-GhExe
 if ($gh -and $env:GITHUB_REPOSITORY) {
     if (-not $env:GH_TOKEN) { $env:GH_TOKEN = $env:GITHUB_TOKEN }
-    gh release view rdpfread-state-latest --repo $env:GITHUB_REPOSITORY 2>$null | Out-Null
+    & $gh release view rdpfread-state-latest --repo $env:GITHUB_REPOSITORY 2>$null | Out-Null
     if ($LASTEXITCODE -ne 0) {
-        gh release create rdpfread-state-latest --repo $env:GITHUB_REPOSITORY --title "RDPfread State (latest)" --notes "Arsip state sesi RDPfread - dikelola otomatis." 2>$null | Out-Null
+        & $gh release create rdpfread-state-latest --repo $env:GITHUB_REPOSITORY --title "RDPfread State (latest)" --notes "Arsip state sesi RDPfread - dikelola otomatis." 2>$null | Out-Null
     }
-    gh release upload rdpfread-state-latest $finalFile --clobber --repo $env:GITHUB_REPOSITORY 2>$null | Out-Null
+    & $gh release upload rdpfread-state-latest $finalFile --clobber --repo $env:GITHUB_REPOSITORY 2>$null | Out-Null
     if ($LASTEXITCODE -eq 0) { Write-Log "State terunggah ke Release rdpfread-state-latest." }
     else { Write-Warn "Upload Release gagal - state lokal tetap ada sebagai artifact." }
 } else { Write-Warn "gh/token tidak tersedia - upload Release dilewati." }

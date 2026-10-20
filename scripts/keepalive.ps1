@@ -81,9 +81,19 @@ while ((Get-Date).ToUniversalTime() -lt $stop) {
         $disk = Get-PSDrive C
         $diskPct = [math]::Round(($disk.Used / ($disk.Used + $disk.Free)) * 100, 0)
         Write-Log ("detak #{0} | sisa {1} mnt | CPU {2}% | RAM {3}/{4} GB | disk C {5}% terpakai | tailscale={6}" -f $i, $rem, $cpu, $ramUsed, $ramTot, $diskPct, $(if ($tsIp) { $tsIp } else { "terputus" }))
-        if (-not $tsIp -and $ts -and $env:TAILSCALE_AUTH_KEY) {
-            Write-Warn "Tailscale terputus - menyambung ulang..."
-            & $ts up --authkey $env:TAILSCALE_AUTH_KEY --hostname (Get-RdpHostname) --accept-dns=false --timeout=60s 2>$null | Out-Null
+        if (-not $tsIp) {
+            if (-not $ts) {
+                # Bedakan "terputus" vs "binary hilang" supaya log bisa didiagnosis
+                # (insiden 2026-10-20: tailscale.exe lenyap dari VM di tengah sesi).
+                if (-not $script:warnedNoTsExe) { $script:warnedNoTsExe = $true; Write-Warn "tailscale.exe TIDAK DITEMUKAN di path standar - sesi tidak bisa dipulihkan dari dalam (dugaan insiden platform VM)." }
+            } else {
+                Write-Warn "Tailscale terputus - menyambung ulang..."
+                # Node yang sudah terdaftar bisa reconnect TANPA auth key; key
+                # hanya dipakai bila tersedia. Dulu reconnect ke-gate auth key
+                # dan diam-diam tidak pernah jalan saat key tidak terbaca.
+                if ($env:TAILSCALE_AUTH_KEY) { & $ts up --authkey $env:TAILSCALE_AUTH_KEY --hostname (Get-RdpHostname) --accept-dns=false --timeout=60s 2>$null | Out-Null }
+                else { & $ts up --accept-dns=false --timeout=60s 2>$null | Out-Null }
+            }
         }
         & (Join-Path $here "publish-status.ps1") | Out-Null
     }
