@@ -1,0 +1,6 @@
+out/
+*.msi
+*.tar.gz
+*.tar.gz.enc
+rdpfread-state*
+.DS_Store

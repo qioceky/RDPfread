@@ -1,0 +1,6 @@
+# backup-paths.txt - folder/file yang ikut disimpan ke state antar sesi RDPfread.
+# Satu path per baris. Token yang didukung: %RDP_USER% (username RDP dari workflow).
+# Path default: folder kerja C:\RDPData + Desktop & Documents milik user RDP.
+C:\RDPData
+C:\Users\%RDP_USER%\Desktop
+C:\Users\%RDP_USER%\Documents

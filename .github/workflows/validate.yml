@@ -1,0 +1,51 @@
+name: Validate RDPfread
+
+on:
+  push:
+    paths: ['scripts/**', '.github/workflows/**', 'setup-wizard.ps1', 'setup-wizard.sh']
+  pull_request:
+    paths: ['scripts/**', '.github/workflows/**', 'setup-wizard.ps1', 'setup-wizard.sh']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  yaml:
+    name: Validasi YAML workflow
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - name: Validasi YAML workflow
+        run: python3 -c "import yaml,glob; [yaml.safe_load(open(f)) for f in glob.glob('.github/workflows/*.yml')]; print('YAML OK')"
+
+  powershell:
+    name: Validasi sintaks PowerShell
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@v5
+      - name: Parse semua script .ps1
+        shell: pwsh
+        run: |
+          $fail = 0
+          Get-ChildItem -Recurse -Filter *.ps1 | ForEach-Object {
+            $tokens = $null; $errors = $null
+            [System.Management.Automation.Language.Parser]::ParseFile($_.FullName, [ref]$tokens, [ref]$errors) | Out-Null
+            if ($errors -and $errors.Count -gt 0) {
+              Write-Host "SYNTAX ERROR: $($_.FullName)"
+              $errors | ForEach-Object { Write-Host $_.Message }
+              $fail = 1
+            } else {
+              Write-Host "OK: $($_.Name)"
+            }
+          }
+          exit $fail
+      - name: PSScriptAnalyzer (severity Error, bila tersedia)
+        shell: pwsh
+        continue-on-error: true
+        run: |
+          if (Get-Module -ListAvailable PSScriptAnalyzer) {
+            Invoke-ScriptAnalyzer -Path scripts -Recurse -Severity Error
+          } else {
+            Write-Host "PSScriptAnalyzer tidak tersedia - dilewati."
+          }

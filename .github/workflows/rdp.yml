@@ -1,0 +1,175 @@
+# rdpfread-workflow-schema: 1
+name: RDPfread — RDP Windows 6 Jam Pro
+
+on:
+  workflow_dispatch:
+    inputs:
+      durasi_menit:
+        description: 'Durasi sesi (menit, 10-342)'
+        required: false
+        default: '342'
+        type: string
+      hostname:
+        description: 'Prefix hostname Tailscale'
+        required: false
+        default: 'rdpfread'
+        type: string
+      rdp_user:
+        description: 'Username RDP (password = secret RDP_PASSWORD)'
+        required: false
+        default: 'fread'
+        type: string
+      runner:
+        description: 'Image runner Windows'
+        required: false
+        default: 'windows-2022'
+        type: choice
+        options: [windows-2022, windows-2025, windows-latest]
+      preset:
+        description: 'Preset software: minimal | web (Node+Python) | dev (web+Git+VS Code) | full (dev+PowerShell 7+Terminal+Chrome) | desktop (full+PowerToys+VLC+LibreOffice+OBS)'
+        required: false
+        default: 'minimal'
+        type: choice
+        options: [minimal, web, dev, full, desktop]
+      akses_ssh:
+        description: 'Aktifkan OpenSSH Server Windows juga (terminal, user+password sama, hanya tailnet)?'
+        required: false
+        default: 'tidak'
+        type: choice
+        options: [ya, tidak]
+      timezone:
+        description: 'Timezone sesi'
+        required: false
+        default: 'Asia/Jakarta'
+        type: choice
+        options: [Asia/Jakarta, Asia/Singapore, Asia/Tokyo, UTC, Europe/London, America/New_York]
+      perpanjang_otomatis:
+        description: 'Lanjutkan otomatis ke sesi berikutnya (state dipertahankan)?'
+        required: false
+        default: 'ya'
+        type: choice
+        options: [ya, tidak]
+      renewal:
+        description: 'Internal: diisi otomatis saat estafet sesi'
+        required: false
+        default: 'tidak'
+        type: choice
+        options: [tidak, ya]
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: rdpfread-active-session
+  cancel-in-progress: false
+
+jobs:
+  rdp:
+    name: Sesi RDPfread (${{ inputs.runner || 'windows-2022' }} / ${{ inputs.preset || 'minimal' }})
+    runs-on: ${{ inputs.runner || 'windows-2022' }}
+    timeout-minutes: 360
+    env:
+      DUR: ${{ inputs.durasi_menit || '342' }}
+      RDP_HOST: ${{ inputs.hostname || 'rdpfread' }}
+      RDP_USER: ${{ inputs.rdp_user || 'fread' }}
+      RUNNER_IMAGE: ${{ inputs.runner || 'windows-2022' }}
+      PRESET: ${{ inputs.preset || 'minimal' }}
+      AKSES_SSH: ${{ inputs.akses_ssh || 'tidak' }}
+      TZ_NAME: ${{ inputs.timezone || 'Asia/Jakarta' }}
+      PERPANJANG_OTOMATIS: ${{ inputs.perpanjang_otomatis || 'ya' }}
+      RENEWAL: ${{ inputs.renewal || 'tidak' }}
+      RDP_PASSWORD: ${{ secrets.RDP_PASSWORD }}
+      TAILSCALE_AUTH_KEY: ${{ secrets.TAILSCALE_AUTH_KEY }}
+      STATE_ENCRYPTION_KEY: ${{ secrets.STATE_ENCRYPTION_KEY }}
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+      TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+      DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+      NOTIFY_WEBHOOK_URL: ${{ secrets.NOTIFY_WEBHOOK_URL }}
+      CLEANUP_TOKEN: ${{ secrets.CLEANUP_TOKEN }}
+      GH_TOKEN: ${{ github.token }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Bersihkan run lama
+        continue-on-error: true
+        shell: pwsh
+        run: ./scripts/cleanup-actions.ps1
+
+      - name: Setup dasar (user RDP, password, timezone, folder kerja)
+        shell: pwsh
+        run: ./scripts/setup-rdp.ps1
+
+      - name: Pulihkan state sesi sebelumnya
+        continue-on-error: true
+        shell: pwsh
+        run: ./scripts/restore-state.ps1
+
+      - name: Setup akses Tailscale + batasi RDP ke tailnet
+        shell: pwsh
+        run: ./scripts/setup-akses.ps1
+
+      - name: Tweak khas Windows (power, Explorer, shortcut, redirection)
+        continue-on-error: true
+        shell: pwsh
+        run: ./scripts/setup-windows.ps1
+
+      - name: OpenSSH Server Windows (opsional, input akses_ssh)
+        continue-on-error: true
+        shell: pwsh
+        run: ./scripts/setup-ssh.ps1
+
+      - name: Pasang preset software
+        continue-on-error: true
+        shell: pwsh
+        run: ./scripts/setup-preset.ps1
+
+      - name: Publish status aktif + notifikasi ready
+        continue-on-error: true
+        shell: pwsh
+        run: |
+          ./scripts/publish-status.ps1 -Active true
+          $s = Get-Content out/rdp-status.json -Raw | ConvertFrom-Json
+          ./scripts/notify.ps1 -Event ready -Message "RDPfread siap | RDP ke $($s.tailscale_ip) user $($s.rdp_user) | berakhir $($s.expires_at) UTC | preset $($s.preset)"
+
+      - name: Buat file koneksi .rdp siap klik
+        continue-on-error: true
+        shell: pwsh
+        run: ./scripts/make-rdp-file.ps1
+
+      - name: Upload file koneksi .rdp sebagai artifact
+        continue-on-error: true
+        uses: actions/upload-artifact@v5
+        with:
+          name: rdpfread-connection
+          path: out/connection/rdpfread.rdp
+          if-no-files-found: ignore
+          retention-days: 7
+
+      - name: Jaga sesi hidup (heartbeat, checkpoint, handover, auto-stop)
+        shell: pwsh
+        run: ./scripts/keepalive.ps1
+
+      - name: Simpan state final
+        if: always()
+        continue-on-error: true
+        shell: pwsh
+        run: ./scripts/persist-state.ps1
+
+      - name: Upload state sebagai artifact
+        if: always()
+        continue-on-error: true
+        uses: actions/upload-artifact@v5
+        with:
+          name: rdpfread-state
+          path: out/state/rdpfread-state*
+          if-no-files-found: ignore
+          retention-days: 30
+
+      - name: Finalize (logout Tailscale, status off, notifikasi)
+        if: always()
+        continue-on-error: true
+        shell: pwsh
+        run: ./scripts/finalize.ps1
