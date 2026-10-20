@@ -26,11 +26,11 @@ on:
         type: choice
         options: [windows-2022, windows-2025, windows-latest]
       preset:
-        description: 'Preset software: minimal | web (Node+Python) | dev (web+Git+VS Code) | full (dev+PowerShell 7+Terminal+Chrome) | desktop (full+PowerToys+VLC+LibreOffice+OBS)'
+        description: 'Preset software: minimal | ringan (Firefox+LibreOffice+SumatraPDF+7-Zip+Notepad+++PowerShell 7) | web (Node+Python) | dev (web+Git+VS Code) | full (dev+PowerShell 7+Terminal+Chrome) | desktop (full+PowerToys+VLC+LibreOffice+OBS)'
         required: false
         default: 'minimal'
         type: choice
-        options: [minimal, web, dev, full, desktop]
+        options: [minimal, ringan, web, dev, full, desktop]
       akses_ssh:
         description: 'Aktifkan OpenSSH Server Windows juga (terminal, user+password sama, hanya tailnet)?'
         required: false

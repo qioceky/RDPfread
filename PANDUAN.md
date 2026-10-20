@@ -26,6 +26,7 @@ Untuk notifikasi Telegram: buat bot via @BotFather → dapat token; kirim pesan 
    - Butuh Node/Python → preset `web`.
    - Butuh Git + VS Code → preset `dev`.
    - Butuh semuanya + browser → preset `full`.
+   - Mau buat harian/kantor yang ringan (Firefox, LibreOffice pengganti Word/Excel, PDF) → preset `ringan`.
    - Mau desktop Windows lengkap (PowerToys, VLC, LibreOffice, OBS) → preset `desktop`.
    - Mau bisa masuk lewat terminal juga (dari Termux) → set `akses_ssh` = `ya`.
 3. Klik **Run workflow**, tunggu ±3–6 menit sampai step *Setup akses Tailscale* selesai.

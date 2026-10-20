@@ -10,7 +10,7 @@ RDP **Windows** gratis yang dijalankan oleh **GitHub Actions** dan diakses lewat
 
 | Fitur | Keterangan |
 |---|---|
-| 🎛️ **Preset software** | Pilih saat Run: `minimal` / `web` (Node LTS + Python) / `dev` (web + Git + VS Code) / `full` (dev + PowerShell 7 + Windows Terminal + Chrome) / `desktop` (full + PowerToys + VLC + LibreOffice + OBS Studio) |
+| 🎛️ **Preset software** | Pilih saat Run: `minimal` / `ringan` (Firefox + LibreOffice + SumatraPDF + 7-Zip + Notepad++ + PowerShell 7, buat harian/kantor) / `web` (Node LTS + Python) / `dev` (web + Git + VS Code) / `full` (dev + PowerShell 7 + Windows Terminal + Chrome) / `desktop` (full + PowerToys + VLC + LibreOffice + OBS Studio) |
 | 🪟 **Tweak khas Windows** | Power plan High Performance (tanpa sleep), Explorer menampilkan ekstensi & file tersembunyi, long paths aktif, clipboard/drive/audio redirection RDP, policy installer `.msi` dilonggarkan (image runner memblokirnya secara default), shortcut `RDPData` di desktop |
 | 🖱️ **File `.rdp` siap klik** | Artifact `rdpfread-connection` berisi `rdpfread.rdp` (IP + user + fullscreen) — unduh, klik dua kali, masukkan password, langsung terhubung |
 | 🔑 **SSH ke Windows (opsional)** | Input `akses_ssh=ya` memasang OpenSSH Server bawaan Windows: `ssh fread@100.x.x.x` dengan password yang sama, shell PowerShell, tetap hanya dari tailnet |

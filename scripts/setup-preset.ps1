@@ -1,5 +1,7 @@
 # setup-preset.ps1 - pasang software sesuai input preset workflow.
 #   minimal : (tidak ada tambahan)
+#   ringan  : Firefox + LibreOffice + SumatraPDF + 7-Zip + Notepad++ + PowerShell 7
+#             (kebutuhan kantor/harian serba ringan, tanpa toolchain dev)
 #   web     : Node.js LTS + Python 3.12
 #   dev     : web + Git + VS Code
 #   full    : dev + PowerShell 7 + Windows Terminal + Chrome + 7-Zip + Notepad++
@@ -27,9 +29,12 @@ $catalog = @{
     "VideoLAN.VLC"               = @{ Name = "VLC";         Choco = "vlc" }
     "LibreOffice.LibreOffice"    = @{ Name = "LibreOffice"; Choco = "libreoffice-fresh" }
     "OBSProject.OBSStudio"       = @{ Name = "OBS Studio";  Choco = "obs-studio" }
+    "Mozilla.Firefox"            = @{ Name = "Firefox";     Choco = "firefox" }
+    "SumatraPDF.SumatraPDF"      = @{ Name = "SumatraPDF";  Choco = "sumatrapdf" }
 }
 $plan = @{
     "minimal" = @()
+    "ringan"  = @("Mozilla.Firefox", "LibreOffice.LibreOffice", "SumatraPDF.SumatraPDF", "7zip.7zip", "Notepad++.Notepad++", "Microsoft.PowerShell")
     "web"     = @("OpenJS.NodeJS.LTS", "Python.Python.3.12")
     "dev"     = @("OpenJS.NodeJS.LTS", "Python.Python.3.12", "Git.Git", "Microsoft.VisualStudioCode")
     "full"    = @("OpenJS.NodeJS.LTS", "Python.Python.3.12", "Git.Git", "Microsoft.VisualStudioCode", "Microsoft.PowerShell", "Microsoft.WindowsTerminal", "Google.Chrome", "7zip.7zip", "Notepad++.Notepad++")

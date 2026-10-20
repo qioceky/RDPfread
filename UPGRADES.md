@@ -37,3 +37,6 @@ Perapihan total dari versi awal RDPfread (satu file workflow, dibuat 2026-10-10)
 
 ## Perbaikan v1.0.2 (dari temuan sesi pertama, 2026-10-20)
 24. **Fix install .msi terblokir policy** — `setup-windows.ps1` kini menyetel `DisableMSI=0` + `DisableUserInstalls=0` (HKLM\Software\Policies\Microsoft\Windows\Installer) karena image runner GitHub memblokir Windows Installer dari sesi interaktif ("The system administrator has set policies to prevent this installation"). `AlwaysInstallElevated` sengaja TIDAK diaktifkan (lubang keamanan).
+
+## v1.0.3 (2026-10-20)
+25. **Preset baru `ringan`** — buat pemakaian harian/kantor tanpa toolchain dev: Firefox, LibreOffice (Writer/Calc/Impress, pengganti gratis Word/Excel/PowerPoint), SumatraPDF, 7-Zip, Notepad++, PowerShell 7. Total unduhan ±550 MB, jauh lebih ringan dari preset `desktop`.
