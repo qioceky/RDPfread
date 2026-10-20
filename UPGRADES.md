@@ -40,3 +40,7 @@ Perapihan total dari versi awal RDPfread (satu file workflow, dibuat 2026-10-10)
 
 ## v1.0.3 (2026-10-20)
 25. **Preset baru `ringan`** — buat pemakaian harian/kantor tanpa toolchain dev: Firefox, LibreOffice (Writer/Calc/Impress, pengganti gratis Word/Excel/PowerPoint), SumatraPDF, 7-Zip, Notepad++, PowerShell 7. Total unduhan ±550 MB, jauh lebih ringan dari preset `desktop`.
+
+## Perbaikan v1.0.4 (dari log sesi ringan windows-2025, 2026-10-20)
+26. **Step restore tidak lagi ditandai gagal padahal sukses** — exit code robocopy 0–7 (termasuk 1 = "file tersalin") kini diperlakukan sebagai sukses di `restore-state.ps1` dan `persist-state.ps1`, dan `$LASTEXITCODE` direset di jalur keluar restore; sebelumnya runner Actions menandai step merah "exit code 1" walau restore selesai sempurna.
+27. **Tweak Explorer akhirnya jalan** — path hive Default User diganti dari `HKU:\...` (drive `HKU:` tidak pernah ada secara default di PowerShell, tweak gagal sejak v1.0.0) ke path provider `Registry::HKEY_USERS\...`, jadi ekstensi file & file tersembunyi benar-benar tampil untuk user RDP.

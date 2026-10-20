@@ -39,6 +39,10 @@ foreach ($p in $paths) {
     if ((Get-Item $p).PSIsContainer) {
         # /E semua subfolder, /NFL /NDL senyap, /R:1 /W:1 toleran file terkunci
         robocopy $p $dest /E /NFL /NDL /NJH /NJS /R:1 /W:1 | Out-Null
+        # Exit code robocopy 0-7 = sukses; >=8 baru error. Reset supaya tidak
+        # terbaca sebagai kegagalan step oleh runner Actions.
+        if ($LASTEXITCODE -ge 8) { Write-Warn "robocopy melaporkan error ($LASTEXITCODE) untuk $p" }
+        $global:LASTEXITCODE = 0
     } else {
         New-Item -ItemType Directory -Path $dest -Force | Out-Null
         Copy-Item $p (Join-Path $dest (Split-Path $p -Leaf)) -Force

@@ -33,7 +33,9 @@ try {
     reg load "HKU\RDPfreadDefault" "C:\Users\Default\NTUSER.DAT" 2>$null | Out-Null
     if ($LASTEXITCODE -eq 0) {
         $hiveLoaded = $true
-        $adv = "HKU:\RDPfreadDefault\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced"
+        # Pakai path provider Registry:: - drive HKU: tidak tersedia secara
+        # default di PowerShell, jadi HKU:\... selalu gagal (bug v1.0.0-1.0.3).
+        $adv = "Registry::HKEY_USERS\RDPfreadDefault\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced"
         if (-not (Test-Path $adv)) { New-Item -Path $adv -Force | Out-Null }
         Set-ItemProperty -Path $adv -Name "HideFileExt" -Value 0 -Type DWord
         Set-ItemProperty -Path $adv -Name "Hidden" -Value 1 -Type DWord
