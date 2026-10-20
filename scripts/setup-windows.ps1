@@ -4,6 +4,9 @@
 #    jadi berlaku untuk user RDP saat pertama login)
 #  + long paths aktif
 #  + redirection RDP eksplisit: clipboard, drive, dan audio boleh dipakai klien
+#  + policy Windows Installer dilonggarkan (DisableMSI=0) - image runner GitHub
+#    memblokir install .msi dari sesi interaktif ("The system administrator has
+#    set policies to prevent this installation", temuan Run pertama v1.0.0)
 #  + shortcut Public Desktop: folder C:\RDPData + file info koneksi
 $ErrorActionPreference = "Continue"
 $script:RdpTag = "RDPfread:windows"
@@ -41,6 +44,18 @@ try {
 finally {
     if ($hiveLoaded) { [gc]::Collect(); reg unload "HKU\RDPfreadDefault" 2>$null | Out-Null }
 }
+
+# --- Windows Installer: izinkan install .msi dari sesi desktop ---
+# Catatan keamanan: yang dilonggarkan hanya DisableMSI/DisableUserInstalls.
+# AlwaysInstallElevated SENGAJA tidak diaktifkan (itu setara memberi admin ke
+# semua proses user dan dianggap lubang keamanan oleh Microsoft).
+try {
+    $instKey = "HKLM:\Software\Policies\Microsoft\Windows\Installer"
+    if (-not (Test-Path $instKey)) { New-Item -Path $instKey -Force | Out-Null }
+    Set-ItemProperty -Path $instKey -Name "DisableMSI" -Value 0 -Type DWord
+    Set-ItemProperty -Path $instKey -Name "DisableUserInstalls" -Value 0 -Type DWord
+    Write-Log "Policy Windows Installer dilonggarkan (DisableMSI=0) - install .msi dari desktop diizinkan."
+} catch { Write-Warn ("Set policy Installer gagal: " + $_.Exception.Message) }
 
 # --- Redirection RDP: clipboard / drive / audio diizinkan dari klien ---
 try {

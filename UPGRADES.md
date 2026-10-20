@@ -34,3 +34,6 @@ Perapihan total dari versi awal RDPfread (satu file workflow, dibuat 2026-10-10)
 ## Perbaikan v1.0.1 (dari temuan Run pertama, 2026-10-20)
 22. **Fix keepalive mati 0 detik** — `ConvertFrom-Json` PowerShell 7 mengubah string tanggal ISO jadi DateTime lokal; setelah timezone VM diganti, jam berakhir UTC bergeser -7 jam sehingga sesi dianggap sudah habis. Sekarang semua tanggal status dibaca sebagai UTC murni (`Get-StatusUtc`) + pengaman hitung-ulang dari `started_at`, dan format tampilan tanggal dikembalikan ke ISO UTC. Teruji di zona Jakarta/UTC/New York.
 23. **Fix publish status & cleanup ke-skip** — workflow kini menyetel `GITHUB_TOKEN` (sebelumnya hanya `GH_TOKEN`) yang dibaca script publish-status, cleanup, dan dispatch handover.
+
+## Perbaikan v1.0.2 (dari temuan sesi pertama, 2026-10-20)
+24. **Fix install .msi terblokir policy** — `setup-windows.ps1` kini menyetel `DisableMSI=0` + `DisableUserInstalls=0` (HKLM\Software\Policies\Microsoft\Windows\Installer) karena image runner GitHub memblokir Windows Installer dari sesi interaktif ("The system administrator has set policies to prevent this installation"). `AlwaysInstallElevated` sengaja TIDAK diaktifkan (lubang keamanan).
