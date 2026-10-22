@@ -29,28 +29,39 @@ if (Test-Path $configFile) {
 }
 if ($paths.Count -eq 0) { $paths = @("C:\RDPData") }
 
+# Profil asli user bisa bersuffix (mis. fread.runnervmX) - baca dari jalur
+# asli (resolver ProfileList), tapi manifest tetap mencatat target kanonis
+# C:\Users\<user> supaya restore/merge seragam (v1.2.1).
+$canonProfile = "C:\Users\$user"
+$realProfile = Get-ProfileDirForUser $user
+if ($realProfile -and $realProfile -ne $canonProfile) { Write-Log "Profil asli user terdeteksi: $realProfile (kanonis: $canonProfile)" }
+
 $manifest = @()
 $i = 0
 foreach ($p in $paths) {
-    if (-not (Test-Path $p)) { Write-Log "Lewati (tidak ada): $p"; continue }
+    $srcPath = $p
+    if ($realProfile -and $p.StartsWith($canonProfile, [System.StringComparison]::OrdinalIgnoreCase)) {
+        $srcPath = $realProfile + $p.Substring($canonProfile.Length)
+    }
+    if (-not (Test-Path $srcPath)) { Write-Log "Lewati (tidak ada): $srcPath"; continue }
     $i++
     $name = "item{0}" -f $i
     $dest = Join-Path $staging $name
-    if ((Get-Item $p).PSIsContainer) {
+    if ((Get-Item $srcPath).PSIsContainer) {
         # /E semua subfolder, /NFL /NDL senyap, /R:1 /W:1 toleran file terkunci,
         # /XJ lewati junction (hindari loop di AppData), /XD kecualikan folder
         # cache browser/profile (besar, tidak berguna antar sesi) dan folder
         # GTASA (game +/-4,7 GB melewati batas asset Release GitHub 2 GB -
         # lihat setup-games.ps1; tanpa pengecualian ini seluruh state gagal
         # terunggah untuk user preset game).
-        robocopy $p $dest /E /XJ /NFL /NDL /NJH /NJS /R:1 /W:1 /XD Cache "Code Cache" GPUCache DawnCache GrShaderCache ShaderCache "Service Worker" "C:\RDPData\GTASA" | Out-Null
+        robocopy $srcPath $dest /E /XJ /NFL /NDL /NJH /NJS /R:1 /W:1 /XD Cache "Code Cache" GPUCache DawnCache GrShaderCache ShaderCache "Service Worker" "C:\RDPData\GTASA" "C:\RDPData\.profil-restore" | Out-Null
         # Exit code robocopy 0-7 = sukses; >=8 baru error. Reset supaya tidak
         # terbaca sebagai kegagalan step oleh runner Actions.
-        if ($LASTEXITCODE -ge 8) { Write-Warn "robocopy melaporkan error ($LASTEXITCODE) untuk $p" }
+        if ($LASTEXITCODE -ge 8) { Write-Warn "robocopy melaporkan error ($LASTEXITCODE) untuk $srcPath" }
         $global:LASTEXITCODE = 0
     } else {
         New-Item -ItemType Directory -Path $dest -Force | Out-Null
-        Copy-Item $p (Join-Path $dest (Split-Path $p -Leaf)) -Force
+        Copy-Item $srcPath (Join-Path $dest (Split-Path $p -Leaf)) -Force
     }
     $manifest += [PSCustomObject]@{ staging = $name; target = $p; kind = "path" }
     Write-Log "State: $p -> $name"
@@ -65,7 +76,8 @@ if ($manifest.Count -eq 0) { Write-Warn "Tidak ada path state yang bisa disimpan
 # ulang situs-situs tiap estafet. Folder staging khusus, dipulihkan restore-state
 # dengan translasi SID (kind = "dpapi").
 try {
-    $profRoot = "C:\Users\$user"
+    $profRoot = $realProfile
+    if (-not $profRoot) { $profRoot = $canonProfile }
     $protect = Join-Path $profRoot "AppData\Roaming\Microsoft\Protect"
     if (Test-Path $protect) {
         $sidDirs = @(Get-ChildItem $protect -Directory -Force -ErrorAction SilentlyContinue | Where-Object { $_.Name -like "S-1-*" })
@@ -90,7 +102,7 @@ try {
             robocopy $cp $cd /E /XJ /NFL /NDL /NJH /NJS /R:1 /W:1 | Out-Null
             if ($LASTEXITCODE -ge 8) { Write-Warn "robocopy melaporkan error ($LASTEXITCODE) untuk $cp" }
             $global:LASTEXITCODE = 0
-            if (Test-Path $cd) { $manifest += [PSCustomObject]@{ staging = $cred[1]; target = $cp; kind = "path" } }
+            if (Test-Path $cd) { $manifest += [PSCustomObject]@{ staging = $cred[1]; target = (Join-Path $canonProfile $cred[0]); kind = "path" } }
         }
     }
 } catch { Write-Warn ("Backup DPAPI/kredensial dilewati: " + $_.Exception.Message) }

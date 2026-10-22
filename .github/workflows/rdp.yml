@@ -140,6 +140,12 @@ jobs:
         shell: pwsh
         run: ./scripts/setup-preset.ps1
 
+      - name: Pasang paket game (khusus preset game)
+        if: ${{ inputs.preset == 'game' }}
+        continue-on-error: true
+        shell: pwsh
+        run: ./scripts/setup-games.ps1
+
       - name: Publish status aktif + notifikasi ready
         continue-on-error: true
         shell: pwsh

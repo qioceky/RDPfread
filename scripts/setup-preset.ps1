@@ -80,8 +80,13 @@ $tools = [PSCustomObject]@{
 Update-Status @{ tools = $tools }
 Write-Log ("Tools: node={0} python={1} git={2} code={3}" -f $tools.node, $tools.python, $tools.git, $tools.code)
 
-# Preset game: lanjutkan ke paket game khusus (Mesa3D, Minecraft, SA-MP/GTA SA)
+# Preset game: setup-games.ps1 berjalan sebagai step workflow TERSENDIRI
+# (v1.2.1) supaya kegagalannya terlihat jelas, tidak tertelan step ini.
+# Di sini cukup verifikasi paket inti game benar-benar terpasang.
 if ($preset -eq "game") {
-    Write-Log "Melanjutkan ke setup-games.ps1..."
-    & (Join-Path $PSScriptRoot "setup-games.ps1")
+    $javaExe = Get-ChildItem "C:\Program Files\Eclipse Adoptium" -Recurse -Filter "java.exe" -ErrorAction SilentlyContinue | Select-Object -First 1
+    $prismExe = Get-ChildItem "C:\Program Files" -Recurse -Filter "prismlauncher.exe" -ErrorAction SilentlyContinue | Select-Object -First 1
+    Update-Status @{ game_pkgs = [PSCustomObject]@{ java = [bool]$javaExe; prism = [bool]$prismExe } }
+    if ($javaExe) { Write-Log "Verifikasi preset game: Java OK ($($javaExe.FullName))." } else { Write-Warn "Verifikasi preset game: Java TIDAK ditemukan - Mesa/Minecraft tidak akan bekerja." }
+    if ($prismExe) { Write-Log "Verifikasi preset game: PrismLauncher OK." } else { Write-Warn "Verifikasi preset game: PrismLauncher TIDAK ditemukan." }
 }

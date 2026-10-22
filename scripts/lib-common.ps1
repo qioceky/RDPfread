@@ -128,3 +128,30 @@ function Get-GhExe {
     if ($cmd) { return $cmd.Source }
     return $null
 }
+
+# --- Profil user RDP (v1.2.1) ---
+# Windows bisa memberi folder profil bersuffix (mis. C:\Users\fread.runnervmX)
+# bila folder C:\Users\<user> sudah keburu ada sebelum logon pertama - folder
+# buatan itu lalu yatim: isi restore tidak terlihat user, dan kerja user di
+# profil asli tidak terbaca persist. Karena itu menulis ke profil SEBELUM
+# logon dilarang: restore menampung item profil di staging
+# (C:\RDPData\.profil-restore) dan merge-profile.ps1 menggabungkannya ke
+# profil asli saat logon pertama. Untuk MEMBACA profil yang sudah terbentuk,
+# selalu pakai resolver ini (membaca ProfileList), jangan menebak path.
+function Get-RdpUserName {
+    $u = Get-StatusValue "rdp_user"
+    if ([string]::IsNullOrWhiteSpace($u)) { $u = $env:RDP_USER }
+    return $u
+}
+function Get-ProfileDirForUser {
+    param([string]$User)
+    if ([string]::IsNullOrWhiteSpace($User)) { return $null }
+    try {
+        $sid = (New-Object System.Security.Principal.NTAccount($User)).Translate([System.Security.Principal.SecurityIdentifier]).Value
+        $key = "Registry::HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\ProfileList\$sid"
+        $p = (Get-ItemProperty -Path $key -Name ProfileImagePath -ErrorAction Stop).ProfileImagePath
+        if ($p) { return [Environment]::ExpandEnvironmentVariables([string]$p) }
+    } catch { }
+    return "C:\Users\$User"
+}
+function Get-ProfileStagingRoot { return "C:\RDPData\.profil-restore" }

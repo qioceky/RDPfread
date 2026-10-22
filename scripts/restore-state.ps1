@@ -40,35 +40,31 @@ if ($LASTEXITCODE -ne 0) { Write-Warn "Ekstrak arsip gagal - restore dilewati.";
 $manifestFile = Join-Path $staging "manifest.json"
 if (-not (Test-Path $manifestFile)) { Write-Warn "manifest.json tidak ada di arsip - restore dilewati."; return }
 $manifest = Get-Content $manifestFile -Raw | ConvertFrom-Json
+$u = Get-StatusValue "rdp_user"
+if ([string]::IsNullOrWhiteSpace($u)) { $u = $env:RDP_USER }
+$canonProfile = "C:\Users\$u"
+$stageRoot = Get-ProfileStagingRoot
+$mergeEntries = @()
 foreach ($entry in $manifest) {
     $src = Join-Path $staging $entry.staging
     if (-not (Test-Path $src)) { continue }
     if ($entry.kind -eq "dpapi") {
-        # Pulihkan master key DPAPI ke folder SID BARU user di VM ini (SID berubah
-        # tiap VM; isi file master key tidak terikat SID). Username + password sama
-        # (dari secret) sehingga DPAPI bisa membuka master key dan browser bisa
-        # mendekripsi cookie/password tersimpan lagi. Best effort - jangan gagalkan
-        # restore keseluruhan karenanya.
-        try {
-            $u = Get-StatusValue "rdp_user"
-            if ([string]::IsNullOrWhiteSpace($u)) { $u = $env:RDP_USER }
-            $sid = $null
-            try { $sid = (Get-LocalUser -Name $u -ErrorAction Stop).SID.Value } catch { }
-            if ($u -and $sid) {
-                $protectRoot = "C:\Users\$u\AppData\Roaming\Microsoft\Protect"
-                $sidDest = Join-Path $protectRoot $sid
-                New-Item -ItemType Directory -Path $sidDest -Force | Out-Null
-                $keysSrc = Join-Path $src "keys"
-                if (Test-Path $keysSrc) { Copy-Item (Join-Path $keysSrc "*") $sidDest -Force -ErrorAction SilentlyContinue }
-                $chFile = Join-Path $src "CREDHIST"
-                if (Test-Path $chFile) { Copy-Item $chFile (Join-Path $protectRoot "CREDHIST") -Force -ErrorAction SilentlyContinue }
-                Write-Log "Dipulihkan: kunci DPAPI user (SID $sid)"
-            } else { Write-Warn "SID user RDP tidak terbaca - restore DPAPI dilewati." }
-        } catch { Write-Warn ("Restore DPAPI dilewati: " + $_.Exception.Message) }
+        # DPAPI tidak lagi ditulis langsung ke C:\Users\<user>: profil asli
+        # bisa bersuffix & folder buatan pra-logon yatim (v1.2.1). Ikut
+        # staging - merge-profile.ps1 menaruhnya ke folder SID user yang
+        # sebenarnya saat logon pertama.
+        $mergeEntries += [PSCustomObject]@{ staging = [string]$entry.staging; rel = ""; kind = "dpapi" }
         continue
     }
     $dst = [Environment]::ExpandEnvironmentVariables([string]$entry.target)
-    # Item berupa folder staging yang mewakili folder target, atau berisi 1 file.
+    if ($u -and $dst.StartsWith($canonProfile + "\", [System.StringComparison]::OrdinalIgnoreCase)) {
+        # Item profil: tampung di staging, JANGAN buat folder profil sebelum
+        # logon (Windows bisa menolaknya & membuat profil bersuffix).
+        $rel = $dst.Substring($canonProfile.Length + 1)
+        $mergeEntries += [PSCustomObject]@{ staging = [string]$entry.staging; rel = $rel; kind = "path" }
+        continue
+    }
+    # Item non-profil (mis. C:\RDPData): salin langsung seperti biasa.
     $items = Get-ChildItem $src -Force -ErrorAction SilentlyContinue
     if ($items.Count -eq 1 -and -not $items[0].PSIsContainer -and -not (Test-Path $dst -PathType Container)) {
         $parent = Split-Path $dst -Parent
@@ -82,6 +78,26 @@ foreach ($entry in $manifest) {
         $global:LASTEXITCODE = 0
     }
     Write-Log "Dipulihkan: $dst"
+}
+# --- Stage item profil untuk digabung saat logon pertama ---
+if ($mergeEntries.Count -gt 0) {
+    try {
+        if (Test-Path $stageRoot) { Remove-Item $stageRoot -Recurse -Force }
+        New-Item -ItemType Directory -Path $stageRoot -Force | Out-Null
+        foreach ($me in $mergeEntries) {
+            $s2 = Join-Path $staging $me.staging
+            if ($me.staging -and (Test-Path $s2)) {
+                robocopy $s2 (Join-Path $stageRoot $me.staging) /E /XJ /NFL /NDL /NJH /NJS /R:1 /W:1 | Out-Null
+                $global:LASTEXITCODE = 0
+            }
+        }
+        (ConvertTo-Json -Depth 5 -InputObject @($mergeEntries)) | Set-Content -Path (Join-Path $stageRoot "merge-manifest.json") -Encoding UTF8
+        Copy-Item (Join-Path $PSScriptRoot "merge-profile.ps1") (Join-Path $stageRoot "merge-profile.ps1") -Force
+        $runOnceCmd = "powershell.exe -NoProfile -ExecutionPolicy Bypass -File `"$stageRoot\merge-profile.ps1`""
+        reg.exe add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnce" /v RDPfreadProfileMerge /t REG_SZ /d $runOnceCmd /f | Out-Null
+        Write-Log ("{0} item profil ditampung di staging - digabung ke profil asli saat logon pertama user." -f $mergeEntries.Count)
+        Update-Status @{ profile_merge = "menunggu-logon" }
+    } catch { Write-Warn ("Penampungan item profil gagal: " + $_.Exception.Message) }
 }
 Write-Log "Restore state selesai."
 $global:LASTEXITCODE = 0
