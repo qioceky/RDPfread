@@ -2,7 +2,7 @@
 
 RDP **Windows** gratis yang dijalankan oleh **GitHub Actions** dan diakses lewat **Remote Desktop melalui Tailscale privat**. RDPfread adalah project RDP runner mandiri — pasangan Windows dari [QVPS](https://github.com/qioceky/qvps-runner) (Linux/SSH). Versi 1.0 ini adalah perapihan total dari versi awal satu file: sekarang modular, aman, dan terstruktur seperti QVPS. Daftar peningkatannya ada di [UPGRADES.md](UPGRADES.md), panduan langkah demi langkah di [PANDUAN.md](PANDUAN.md).
 
-> ⚠️ **Gunakan repository PRIVATE.** State sesi (isi `C:\RDPData`, Desktop & Documents user) disimpan ke Release & artifact repo agar pekerjaanmu tetap ada antar sesi. Di repo publik, siapa pun bisa mengunduhnya. Repo versi awal project ini masih publik — ubah ke Private sebelum memakai versi ini.
+> ⚠️ **Keamanan state:** state sesi (isi `C:\RDPData`, folder profil user, profil browser) disimpan ke Release & artifact repo agar pekerjaanmu tetap ada antar sesi. Gunakan **repository PRIVATE**, ATAU repository publik **hanya bila** secret `STATE_ENCRYPTION_KEY` diisi sehingga arsip state selalu terenkripsi AES-256 sebelum diunggah — tanpa enkripsi, state di repo publik bisa diunduh siapa pun. Perlu diingat repo publik juga membuka log Actions & branch status (IP/hostname sesi terlihat); RDP-nya sendiri tetap hanya bisa diakses dari tailnet + password.
 
 ---
 
@@ -16,8 +16,10 @@ RDP **Windows** gratis yang dijalankan oleh **GitHub Actions** dan diakses lewat
 | 🔑 **SSH ke Windows (opsional)** | Input `akses_ssh=ya` memasang OpenSSH Server bawaan Windows: `ssh fread@100.x.x.x` dengan password yang sama, shell PowerShell, tetap hanya dari tailnet |
 | 🔐 **Password dari Secret** | Password user RDP dibaca dari secret `RDP_PASSWORD` — tidak ada password tertulis di file repo |
 | 🔒 **RDP hanya dari tailnet** | Rule firewall bawaan yang terbuka dimatikan; RDP (3389) hanya menerima dari `100.64.0.0/10` (jaringan Tailscale), NLA aktif |
-| 💾 **State persisten** | `C:\RDPData` + Desktop & Documents user disimpan tiap 15 menit + di akhir sesi ke Release `rdpfread-state-latest`; daftar path bisa diubah di `config/backup-paths.txt` |
+| 💾 **State persisten** | `C:\RDPData` + folder profil user (Desktop, Documents, Downloads, Pictures, Videos, Music) + profil browser disimpan sebagai checkpoint cerdas (dilewati bila tidak ada perubahan) + di akhir sesi ke Release `rdpfread-state-latest`; daftar path bisa diubah di `config/backup-paths.txt` |
 | 🔑 **State terenkripsi (opsional)** | Secret `STATE_ENCRYPTION_KEY` — arsip state dienkripsi AES-256 (openssl) sebelum upload |
+| 🌐 **Login browser berlanjut** | Master key DPAPI user ikut disimpan & dipulihkan (translasi SID), jadi cookie & password tersimpan Chrome/Edge tetap terbuka di sesi berikutnya — tanpa login ulang |
+| 🧹 **Optimasi storage (input `optimasi`)** | Bebaskan disk runner (toolcache/cache) + matikan service latar non-esensial (telemetri, indexing, Xbox) agar sesi lebih ringan |
 | 🔔 **Notifikasi** | Telegram / Discord / webhook umum: saat RDP siap, mau berakhir, handover, dan berhenti |
 | 🌏 **Timezone bisa dipilih** | Input workflow (default `Asia/Jakarta`), dipetakan otomatis ke timezone Windows |
 | 📊 **Dashboard status** | Branch `status` berisi `rdp-status.json` (schema v2) **dan** `STATUS.md` yang enak dibaca |
@@ -35,7 +37,7 @@ Setiap Run workflow, GitHub menyiapkan satu VM Windows sementara (ephemeral):
 2. `setup-rdp.ps1` membuat user RDP + password dari secret, mengaktifkan RDP (NLA), timezone, dan folder kerja `C:\RDPData`.
 3. `restore-state.ps1` memulihkan state sesi sebelumnya dari Release `rdpfread-state-latest` per `manifest.json`.
 4. `setup-akses.ps1` memasang Tailscale resmi, menyambung ke tailnet-mu, lalu membatasi firewall RDP hanya dari tailnet.
-5. `setup-windows.ps1` menerapkan tweak khas Windows; `setup-ssh.ps1` memasang OpenSSH Server bila diminta; `setup-preset.ps1` memasang software sesuai pilihanmu (winget, fallback Chocolatey).
+5. `setup-windows.ps1` menerapkan tweak khas Windows; `optimize-storage.ps1` membebaskan disk + debloat ringan (bila `optimasi=ya`); `setup-ssh.ps1` memasang OpenSSH Server bila diminta; `setup-preset.ps1` memasang software sesuai pilihanmu (winget, fallback Chocolatey).
 6. `publish-status.ps1` menulis dashboard ke branch `status`; `notify.ps1` mengirim notifikasi "siap"; `make-rdp-file.ps1` membuat file koneksi `.rdp` siap klik (di-upload sebagai artifact).
 7. `keepalive.ps1` menjaga sesi: health-check tiap menit, checkpoint state tiap 15 menit, handover 20 menit sebelum habis, auto-stop 3 menit sebelum batas 6 jam GitHub.
 
@@ -94,6 +96,7 @@ scripts/
   restore-state.ps1    # pulihkan state (tar.gz, terenkripsi opsional)
   setup-akses.ps1      # Tailscale resmi + firewall RDP khusus tailnet
   setup-windows.ps1    # tweak Windows: power, Explorer, long paths, shortcut
+  optimize-storage.ps1 # storage boost + debloat ringan (input optimasi)
   setup-ssh.ps1        # OpenSSH Server Windows opsional (hanya tailnet)
   make-rdp-file.ps1    # file koneksi .rdp siap klik (artifact)
   setup-preset.ps1     # preset software (winget/choco)

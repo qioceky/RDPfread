@@ -14,7 +14,9 @@ if (-not $gh -or -not $env:GITHUB_REPOSITORY) { Write-Log "gh/repo tidak tersedi
 if (-not $env:GH_TOKEN) { $env:GH_TOKEN = $env:GITHUB_TOKEN }
 
 & $gh release download rdpfread-state-latest --repo $env:GITHUB_REPOSITORY --pattern "rdpfread-state*" --dir $dl 2>$null | Out-Null
-$file = Get-ChildItem $dl -File -ErrorAction SilentlyContinue | Select-Object -First 1
+# Utamakan arsip tar.gz(.enc); asset fingerprint kecil tidak boleh terpilih.
+$file = Get-ChildItem $dl -File -ErrorAction SilentlyContinue | Where-Object { $_.Name -like "rdpfread-state.tar.gz*" } | Select-Object -First 1
+if (-not $file) { $file = Get-ChildItem $dl -File -ErrorAction SilentlyContinue | Where-Object { $_.Name -ne "rdpfread-state.fingerprint" } | Select-Object -First 1 }
 if (-not $file) { Write-Log "Belum ada state tersimpan - sesi mulai dari bersih."; $global:LASTEXITCODE = 0; return }
 Write-Log ("State ditemukan: {0} ({1:N0} bytes)" -f $file.Name, $file.Length)
 
@@ -40,8 +42,32 @@ if (-not (Test-Path $manifestFile)) { Write-Warn "manifest.json tidak ada di ars
 $manifest = Get-Content $manifestFile -Raw | ConvertFrom-Json
 foreach ($entry in $manifest) {
     $src = Join-Path $staging $entry.staging
-    $dst = [Environment]::ExpandEnvironmentVariables([string]$entry.target)
     if (-not (Test-Path $src)) { continue }
+    if ($entry.kind -eq "dpapi") {
+        # Pulihkan master key DPAPI ke folder SID BARU user di VM ini (SID berubah
+        # tiap VM; isi file master key tidak terikat SID). Username + password sama
+        # (dari secret) sehingga DPAPI bisa membuka master key dan browser bisa
+        # mendekripsi cookie/password tersimpan lagi. Best effort - jangan gagalkan
+        # restore keseluruhan karenanya.
+        try {
+            $u = Get-StatusValue "rdp_user"
+            if ([string]::IsNullOrWhiteSpace($u)) { $u = $env:RDP_USER }
+            $sid = $null
+            try { $sid = (Get-LocalUser -Name $u -ErrorAction Stop).SID.Value } catch { }
+            if ($u -and $sid) {
+                $protectRoot = "C:\Users\$u\AppData\Roaming\Microsoft\Protect"
+                $sidDest = Join-Path $protectRoot $sid
+                New-Item -ItemType Directory -Path $sidDest -Force | Out-Null
+                $keysSrc = Join-Path $src "keys"
+                if (Test-Path $keysSrc) { Copy-Item (Join-Path $keysSrc "*") $sidDest -Force -ErrorAction SilentlyContinue }
+                $chFile = Join-Path $src "CREDHIST"
+                if (Test-Path $chFile) { Copy-Item $chFile (Join-Path $protectRoot "CREDHIST") -Force -ErrorAction SilentlyContinue }
+                Write-Log "Dipulihkan: kunci DPAPI user (SID $sid)"
+            } else { Write-Warn "SID user RDP tidak terbaca - restore DPAPI dilewati." }
+        } catch { Write-Warn ("Restore DPAPI dilewati: " + $_.Exception.Message) }
+        continue
+    }
+    $dst = [Environment]::ExpandEnvironmentVariables([string]$entry.target)
     # Item berupa folder staging yang mewakili folder target, atau berisi 1 file.
     $items = Get-ChildItem $src -Force -ErrorAction SilentlyContinue
     if ($items.Count -eq 1 -and -not $items[0].PSIsContainer -and -not (Test-Path $dst -PathType Container)) {

@@ -31,6 +31,12 @@ on:
         default: 'minimal'
         type: choice
         options: [minimal, ringan, web, dev, full, desktop]
+      optimasi:
+        description: 'Optimasi storage + debloat ringan (bebaskan disk toolcache/cache, matikan service latar non-esensial)?'
+        required: false
+        default: 'ya'
+        type: choice
+        options: [ya, tidak]
       akses_ssh:
         description: 'Aktifkan OpenSSH Server Windows juga (terminal, user+password sama, hanya tailnet)?'
         required: false
@@ -75,6 +81,7 @@ jobs:
       RDP_USER: ${{ inputs.rdp_user || 'fread' }}
       RUNNER_IMAGE: ${{ inputs.runner || 'windows-2022' }}
       PRESET: ${{ inputs.preset || 'minimal' }}
+      OPTIMASI: ${{ inputs.optimasi || 'ya' }}
       AKSES_SSH: ${{ inputs.akses_ssh || 'tidak' }}
       TZ_NAME: ${{ inputs.timezone || 'Asia/Jakarta' }}
       PERPANJANG_OTOMATIS: ${{ inputs.perpanjang_otomatis || 'ya' }}
@@ -116,6 +123,12 @@ jobs:
         continue-on-error: true
         shell: pwsh
         run: ./scripts/setup-windows.ps1
+
+      - name: Optimasi storage + debloat ringan (input optimasi)
+        if: ${{ env.OPTIMASI != 'tidak' }}
+        continue-on-error: true
+        shell: pwsh
+        run: ./scripts/optimize-storage.ps1
 
       - name: OpenSSH Server Windows (opsional, input akses_ssh)
         continue-on-error: true

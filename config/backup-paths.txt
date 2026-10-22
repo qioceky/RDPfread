@@ -1,6 +1,16 @@
 # backup-paths.txt - folder/file yang ikut disimpan ke state antar sesi RDPfread.
 # Satu path per baris. Token yang didukung: %RDP_USER% (username RDP dari workflow).
-# Path default: folder kerja C:\RDPData + Desktop & Documents milik user RDP.
+# Path default: folder kerja C:\RDPData + folder profil user RDP (dokumen & media)
+# + profil browser (riwayat, bookmark, sesi login - dibuka lagi dengan kunci DPAPI
+# yang ikut disimpan persist-state.ps1, lihat UPGRADES v1.1.0).
+# Folder cache browser dikecualikan otomatis saat penyalinan (lihat persist-state.ps1).
 C:\RDPData
 C:\Users\%RDP_USER%\Desktop
 C:\Users\%RDP_USER%\Documents
+C:\Users\%RDP_USER%\Downloads
+C:\Users\%RDP_USER%\Pictures
+C:\Users\%RDP_USER%\Videos
+C:\Users\%RDP_USER%\Music
+C:\Users\%RDP_USER%\AppData\Local\Google\Chrome\User Data
+C:\Users\%RDP_USER%\AppData\Local\Microsoft\Edge\User Data
+C:\Users\%RDP_USER%\AppData\Roaming\Mozilla\Firefox\Profiles

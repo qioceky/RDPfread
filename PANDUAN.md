@@ -29,6 +29,7 @@ Untuk notifikasi Telegram: buat bot via @BotFather → dapat token; kirim pesan 
    - Mau buat harian/kantor yang ringan (Firefox, LibreOffice pengganti Word/Excel, PDF) → preset `ringan`.
    - Mau desktop Windows lengkap (PowerToys, VLC, LibreOffice, OBS) → preset `desktop`.
    - Mau bisa masuk lewat terminal juga (dari Termux) → set `akses_ssh` = `ya`.
+   - `optimasi` biarkan `ya` (default): disk runner dibersihkan & service latar non-esensial dimatikan supaya sesi lebih lega; set `tidak` hanya bila ada service bawaan yang kamu perlukan.
 3. Klik **Run workflow**, tunggu ±3–6 menit sampai step *Setup akses Tailscale* selesai.
 
 ## E. Connect
@@ -39,7 +40,7 @@ IP ada di: Summary run (blok **RDP SIAP**), notifikasi Telegram/Discord (bila ak
 - **Terminal (bila `akses_ssh=ya` saat Run):** `ssh fread@100.x.x.x` — password sama, shell-nya PowerShell.
 - Pastikan Tailscale di HP/PC kamu **aktif** — tanpa itu IP `100.x.x.x` tidak akan terjangkau.
 
-Di dalam RDP: simpan semua pekerjaan di **`C:\RDPData`**. Folder di luar daftar `config/backup-paths.txt` akan hilang saat sesi berganti.
+Di dalam RDP: simpan semua pekerjaan di **`C:\RDPData`**. Yang ikut tersimpan antar sesi: `C:\RDPData`, Desktop, Documents, Downloads, Pictures, Videos, Music, dan profil browser (Chrome/Edge/Firefox — termasuk sesi login, berkat kunci DPAPI yang ikut dipulihkan). Folder di luar daftar `config/backup-paths.txt` akan hilang saat sesi berganti.
 
 ## F. Menghentikan
 - **Sesi ini saja**: biarkan — ia berhenti sendiri 3 menit sebelum batas.

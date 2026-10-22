@@ -35,6 +35,7 @@ _Diperbarui: $((Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")) UT
 | OS | $(V "os") |
 | CPU / RAM / Disk bebas | $(V "cpu_threads") thread / $(V "ram_gb") GB / $(V "disk_free_gb") GB |
 | Preset / Timezone | $(V "preset") / $(V "timezone") |
+| Optimasi | $(V "optimasi") |
 | Tools | node $(VT "node"), python $(VT "python"), git $(VT "git") |
 | Mulai | $(V "started_at") |
 | Berakhir | $(V "expires_at") |

@@ -77,6 +77,7 @@ Update-Status @{
     ram_gb      = [math]::Round($os.TotalVisibleMemorySize / 1MB, 1)
     disk_free_gb = $diskFreeGb
     preset      = $(if ($env:PRESET) { $env:PRESET } else { "minimal" })
+    optimasi    = $(if ($env:OPTIMASI) { $env:OPTIMASI } else { "ya" })
     timezone    = $tzName
     started_at  = $now.ToString("yyyy-MM-ddTHH:mm:ssZ")
     expires_at  = $now.AddMinutes($dur).ToString("yyyy-MM-ddTHH:mm:ssZ")

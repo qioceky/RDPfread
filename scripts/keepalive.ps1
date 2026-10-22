@@ -42,6 +42,7 @@ function Send-DispatchNext {
         rdp_user            = $(if ($env:RDP_USER) { $env:RDP_USER } else { "fread" })
         runner              = $(if ($env:RUNNER_IMAGE) { $env:RUNNER_IMAGE } else { "windows-2022" })
         preset              = $(if ($env:PRESET) { $env:PRESET } else { "minimal" })
+        optimasi            = $(if ($env:OPTIMASI) { $env:OPTIMASI } else { "ya" })
         akses_ssh           = $(if ($env:AKSES_SSH) { $env:AKSES_SSH } else { "tidak" })
         timezone            = $(if ($env:TZ_NAME) { $env:TZ_NAME } else { "Asia/Jakarta" })
         perpanjang_otomatis = $(if ($env:PERPANJANG_OTOMATIS) { $env:PERPANJANG_OTOMATIS } else { "ya" })
@@ -49,6 +50,11 @@ function Send-DispatchNext {
     }
     $body = @{ ref = "main"; inputs = $inputs } | ConvertTo-Json -Depth 5
     try {
+        # Jeda acak sopan 10-30 detik sebelum dispatch (v1.1.0) - pola retrigger
+        # yang terlalu kaku/presisi lebih mudah terbaca sebagai bot loop.
+        $jeda = Get-Random -Minimum 10 -Maximum 31
+        Write-Log "Jeda acak $jeda detik sebelum dispatch sesi berikutnya..."
+        Start-Sleep -Seconds $jeda
         Invoke-RestMethod -Uri "https://api.github.com/repos/$($env:GITHUB_REPOSITORY)/actions/workflows/rdp.yml/dispatches" -Method Post -Headers $headers -ContentType "application/json" -Body $body | Out-Null
         return $true
     } catch { Write-Warn ("Dispatch sesi berikutnya gagal: " + $_.Exception.Message); return $false }
