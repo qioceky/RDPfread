@@ -80,5 +80,18 @@ try {
     Write-Log "Shortcut RDPData dibuat di Public Desktop."
 } catch { Write-Warn ("Shortcut gagal dibuat: " + $_.Exception.Message) }
 
+# --- Target FPS RDP (input fps=120) ---
+# DWMFRAMEINTERVAL (ms antar frame DWM untuk sesi RDP) di WinStations:
+# 8 ms ~= target 120 FPS (default Windows jauh lebih konservatif). Berlaku
+# untuk koneksi RDP yang dibuat setelah nilai ini disetel - sesi user
+# pertama di VM ini sudah memakainya.
+if ($env:FPS_MODE -eq "120") {
+    try {
+        $wsKey = "Registry::HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Terminal Server\WinStations"
+        Set-ItemProperty -Path $wsKey -Name DWMFRAMEINTERVAL -Value 8 -Type DWord -ErrorAction Stop
+        Write-Log "Target FPS RDP 120 aktif (DWMFRAMEINTERVAL=8 ms)."
+    } catch { Write-Warn ("Set target FPS gagal: " + $_.Exception.Message) }
+}
+
 Update-Status @{ windows_tweaks = $true }
 Write-Log "Tweak Windows selesai."

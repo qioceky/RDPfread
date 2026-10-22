@@ -1,4 +1,4 @@
-# RDPfread — RDP Windows 6 Jam Pro
+# RDPfread — Sesi 6 Jam Pro (Windows / Linux)
 
 RDP **Windows** gratis yang dijalankan oleh **GitHub Actions** dan diakses lewat **Remote Desktop melalui Tailscale privat**. RDPfread adalah project RDP runner mandiri — pasangan Windows dari [QVPS](https://github.com/qioceky/qvps-runner) (Linux/SSH). Versi 1.0 ini adalah perapihan total dari versi awal satu file: sekarang modular, aman, dan terstruktur seperti QVPS. Daftar peningkatannya ada di [UPGRADES.md](UPGRADES.md), panduan langkah demi langkah di [PANDUAN.md](PANDUAN.md).
 
@@ -10,6 +10,8 @@ RDP **Windows** gratis yang dijalankan oleh **GitHub Actions** dan diakses lewat
 
 | Fitur | Keterangan |
 |---|---|
+| 🖥️ **Pilih OS saat Run** | Runner `windows-2022/2025/latest` = Windows Server (RDP) · runner `ubuntu-24.04/22.04/latest` = Linux dengan input `linux_mode`: `desktop` (XFCE4 + XRDP :3389 + SSH) atau `polos` (SSH saja). State, status, notifikasi & estafet otomatis berlaku untuk keduanya (state Linux = asset terpisah, sama-sama terenkripsi) |
+| 🎞️ **Target 120 FPS** | Input `fps=120` menaikkan plafon frame RDP Windows (`DWMFRAMEINTERVAL=8` ms); Minecraft memang sudah 120 FPS |
 | 🎛️ **Preset software** | Pilih saat Run: `minimal` / `ringan` (Firefox + LibreOffice + SumatraPDF + 7-Zip + Notepad++ + PowerShell 7, buat harian/kantor) / `web` (Node LTS + Python) / `dev` (web + Git + VS Code) / `full` (dev + PowerShell 7 + Windows Terminal + Chrome) / `desktop` (full + PowerToys + VLC + LibreOffice + OBS Studio) / `game` (ringan + Java + Minecraft + paket SA-MP/GTA SA, lihat di bawah) / `optimize` (nol software + debloat berat anti-bloatware, sesi seringan mungkin) |
 | 🎮 **Preset game** | PrismLauncher + JDK 21/JRE 8 + **Mesa3D** (OpenGL software untuk VM tanpa GPU) + launcher Minecraft resmi + `options.txt` ramah RDP + 6 game gratis ringan: **Mindustry, Luanti, GZDoom+Freedoom, OpenTTD, SuperTuxKart, Battle for Wesnoth** (shortcut di Desktop); untuk GTA SA milikmu sendiri: ASI Loader + SilentPatch + dgVoodoo2 dipasang otomatis (game-nya tidak disediakan; installer SA-MP taruh manual di `C:\RDPData\Games-Setup` — situs resminya sedang mati). World Minecraft & instance Prism ikut tersimpan di state; folder GTA SA tidak (batas Release 2 GB) |
 | 🪟 **Tweak khas Windows** | Power plan High Performance (tanpa sleep), Explorer menampilkan ekstensi & file tersembunyi, long paths aktif, clipboard/drive/audio redirection RDP, policy installer `.msi` dilonggarkan (image runner memblokirnya secara default), shortcut `RDPData` di desktop |
@@ -68,7 +70,7 @@ Setiap Run workflow, GitHub menyiapkan satu VM Windows sementara (ephemeral):
 
 ## 4. Menjalankan sesi
 
-1. Tab **Actions → RDPfread — RDP Windows 6 Jam Pro → Run workflow**.
+1. Tab **Actions → RDPfread — Sesi 6 Jam Pro (Windows/Linux) → Run workflow**.
 2. Pilih runner, preset, timezone, dan durasi (default 342 menit).
 3. Tunggu step *Setup akses Tailscale* selesai; IP muncul di log, Summary run, notifikasi, dan branch `status`.
 4. Connect dari perangkat yang login ke tailnet yang sama:
@@ -104,6 +106,7 @@ scripts/
   setup-games.ps1      # paket game preset "game" (Mesa3D, Minecraft, SA-MP/GTA SA, 6 game gratis)
   merge-profile.ps1    # gabung item profil dari staging ke profil asli saat logon pertama
   debloat-windows.ps1  # debloat berat khusus preset "optimize" (AppX, Defender, service, visual)
+  setup-linux.sh       # sesi Linux (XFCE4/XRDP atau SSH polos): setup, keepalive, finalize
   publish-status.ps1   # branch status: rdp-status.json + STATUS.md
   notify.ps1           # Telegram / Discord / webhook
   keepalive.ps1        # heartbeat resource, checkpoint, handover, auto-stop

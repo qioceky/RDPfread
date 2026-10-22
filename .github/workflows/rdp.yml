@@ -1,5 +1,5 @@
 # rdpfread-workflow-schema: 1
-name: RDPfread — RDP Windows 6 Jam Pro
+name: RDPfread — Sesi 6 Jam Pro (Windows/Linux)
 
 on:
   workflow_dispatch:
@@ -20,11 +20,23 @@ on:
         default: 'fread'
         type: string
       runner:
-        description: 'Image runner Windows'
+        description: 'OS & image runner: Windows Server (RDP) atau Linux (mode: input linux_mode)'
         required: false
         default: 'windows-2022'
         type: choice
-        options: [windows-2022, windows-2025, windows-latest]
+        options: [windows-2022, windows-2025, windows-latest, ubuntu-24.04, ubuntu-22.04, ubuntu-latest]
+      linux_mode:
+        description: 'Mode Linux (hanya berlaku bila runner Ubuntu): desktop = XFCE4 + XRDP (RDP :3389) + SSH, polos = SSH saja tanpa desktop'
+        required: false
+        default: 'desktop'
+        type: choice
+        options: [desktop, polos]
+      fps:
+        description: 'Target FPS RDP Windows (120 = interval frame DWM 8 ms; Minecraft memang sudah 120). Linux tidak terpengaruh'
+        required: false
+        default: 'standar'
+        type: choice
+        options: [standar, 120]
       preset:
         description: 'Preset software: minimal | ringan (Firefox+LibreOffice+SumatraPDF+7-Zip+Notepad+++PowerShell 7) | web (Node+Python) | dev (web+Git+VS Code) | full (dev+PowerShell 7+Terminal+Chrome) | desktop (full+PowerToys+VLC+LibreOffice+OBS) | game (ringan+Prism+JDK/JRE+Mesa3D+Minecraft+paket SA-MP/GTA SA) | optimize (nol software tambahan + debloat berat: AppX bloatware dibuang, Defender real-time mati, Ultimate Performance, efek visual mode performa)'
         required: false
@@ -80,6 +92,8 @@ jobs:
       RDP_HOST: ${{ inputs.hostname || 'rdpfread' }}
       RDP_USER: ${{ inputs.rdp_user || 'fread' }}
       RUNNER_IMAGE: ${{ inputs.runner || 'windows-2022' }}
+      LINUX_MODE: ${{ inputs.linux_mode || 'desktop' }}
+      FPS_MODE: ${{ inputs.fps || 'standar' }}
       PRESET: ${{ inputs.preset || 'minimal' }}
       OPTIMASI: ${{ inputs.optimasi || 'ya' }}
       AKSES_SSH: ${{ inputs.akses_ssh || 'tidak' }}
@@ -102,57 +116,65 @@ jobs:
         uses: actions/checkout@v5
 
       - name: Bersihkan run lama
+        if: ${{ runner.os == 'Windows' }}
         continue-on-error: true
         shell: pwsh
         run: ./scripts/cleanup-actions.ps1
 
       - name: Setup dasar (user RDP, password, timezone, folder kerja)
+        if: ${{ runner.os == 'Windows' }}
         shell: pwsh
         run: ./scripts/setup-rdp.ps1
 
       - name: Pulihkan state sesi sebelumnya
+        if: ${{ runner.os == 'Windows' }}
         continue-on-error: true
         shell: pwsh
         run: ./scripts/restore-state.ps1
 
       - name: Setup akses Tailscale + batasi RDP ke tailnet
+        if: ${{ runner.os == 'Windows' }}
         shell: pwsh
         run: ./scripts/setup-akses.ps1
 
       - name: Tweak khas Windows (power, Explorer, shortcut, redirection)
+        if: ${{ runner.os == 'Windows' }}
         continue-on-error: true
         shell: pwsh
         run: ./scripts/setup-windows.ps1
 
       - name: Optimasi storage + debloat ringan (input optimasi)
-        if: ${{ env.OPTIMASI != 'tidak' }}
+        if: ${{ runner.os == 'Windows' && env.OPTIMASI != 'tidak' }}
         continue-on-error: true
         shell: pwsh
         run: ./scripts/optimize-storage.ps1
 
       - name: OpenSSH Server Windows (opsional, input akses_ssh)
+        if: ${{ runner.os == 'Windows' }}
         continue-on-error: true
         shell: pwsh
         run: ./scripts/setup-ssh.ps1
 
       - name: Pasang preset software
+        if: ${{ runner.os == 'Windows' }}
         continue-on-error: true
         shell: pwsh
         run: ./scripts/setup-preset.ps1
 
       - name: Pasang paket game (khusus preset game)
-        if: ${{ inputs.preset == 'game' }}
+        if: ${{ runner.os == 'Windows' && inputs.preset == 'game' }}
         continue-on-error: true
         shell: pwsh
         run: ./scripts/setup-games.ps1
 
       - name: Debloat berat (khusus preset optimize)
-        if: ${{ inputs.preset == 'optimize' }}
+        if: ${{ runner.os == 'Windows' && inputs.preset == 'optimize' }}
         continue-on-error: true
         shell: pwsh
         run: ./scripts/debloat-windows.ps1
 
       - name: Publish status aktif + notifikasi ready
+        if: ${{ runner.os == 'Windows' }}
         continue-on-error: true
         shell: pwsh
         run: |
@@ -163,11 +185,13 @@ jobs:
           ./scripts/notify.ps1 -Event ready -Message "RDPfread siap | RDP ke $($s.tailscale_ip) user $($s.rdp_user) | berakhir $expTxt UTC | preset $($s.preset)"
 
       - name: Buat file koneksi .rdp siap klik
+        if: ${{ runner.os == 'Windows' }}
         continue-on-error: true
         shell: pwsh
         run: ./scripts/make-rdp-file.ps1
 
       - name: Upload file koneksi .rdp sebagai artifact
+        if: ${{ runner.os == 'Windows' }}
         continue-on-error: true
         uses: actions/upload-artifact@v5
         with:
@@ -177,17 +201,18 @@ jobs:
           retention-days: 7
 
       - name: Jaga sesi hidup (heartbeat, checkpoint, handover, auto-stop)
+        if: ${{ runner.os == 'Windows' }}
         shell: pwsh
         run: ./scripts/keepalive.ps1
 
       - name: Simpan state final
-        if: always()
+        if: ${{ always() && runner.os == 'Windows' }}
         continue-on-error: true
         shell: pwsh
         run: ./scripts/persist-state.ps1
 
       - name: Upload state sebagai artifact
-        if: always()
+        if: ${{ always() && runner.os == 'Windows' }}
         continue-on-error: true
         uses: actions/upload-artifact@v5
         with:
@@ -197,7 +222,33 @@ jobs:
           retention-days: 30
 
       - name: Finalize (logout Tailscale, status off, notifikasi)
-        if: always()
+        if: ${{ always() && runner.os == 'Windows' }}
         continue-on-error: true
         shell: pwsh
         run: ./scripts/finalize.ps1
+
+      - name: Bersihkan run lama (Linux)
+        if: ${{ runner.os == 'Linux' }}
+        continue-on-error: true
+        shell: bash
+        run: |
+          ids=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow rdp.yml --limit 60 --json databaseId --jq '.[10:] | .[].databaseId' 2>/dev/null || true)
+          for id in $ids; do gh run delete "$id" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1 || true; done
+
+      - name: Setup sesi Linux (user, Tailscale, XFCE/SSH, state)
+        if: ${{ runner.os == 'Linux' }}
+        shell: bash
+        run: |
+          chmod +x ./scripts/setup-linux.sh
+          ./scripts/setup-linux.sh --setup
+
+      - name: Jaga sesi Linux hidup (heartbeat, checkpoint, handover, auto-stop)
+        if: ${{ runner.os == 'Linux' }}
+        shell: bash
+        run: ./scripts/setup-linux.sh --keepalive
+
+      - name: Finalize sesi Linux (state final, status off, notifikasi)
+        if: ${{ always() && runner.os == 'Linux' }}
+        continue-on-error: true
+        shell: bash
+        run: ./scripts/setup-linux.sh --finalize

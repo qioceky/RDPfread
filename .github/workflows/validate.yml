@@ -19,6 +19,21 @@ jobs:
       - name: Validasi YAML workflow
         run: python3 -c "import yaml,glob; [yaml.safe_load(open(f)) for f in glob.glob('.github/workflows/*.yml')]; print('YAML OK')"
 
+  bash:
+    name: Validasi sintaks Bash (script Linux)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - name: bash -n + shellcheck (severity error)
+        run: |
+          bash -n scripts/setup-linux.sh && echo "bash -n OK: setup-linux.sh"
+          bash -n setup-wizard.sh && echo "bash -n OK: setup-wizard.sh"
+          if command -v shellcheck >/dev/null 2>&1; then
+            shellcheck -S error scripts/setup-linux.sh setup-wizard.sh && echo "shellcheck OK"
+          else
+            echo "shellcheck tidak tersedia - dilewati."
+          fi
+
   powershell:
     name: Validasi sintaks PowerShell
     runs-on: windows-2022
