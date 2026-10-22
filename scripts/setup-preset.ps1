@@ -6,6 +6,8 @@
 #   dev     : web + Git + VS Code
 #   full    : dev + PowerShell 7 + Windows Terminal + Chrome + 7-Zip + Notepad++
 #   desktop : full + PowerToys + VLC + LibreOffice + OBS Studio (pengalaman desktop Windows penuh)
+#   game    : ringan + JDK 21 & JRE 8 (Temurin) + PrismLauncher, lalu setup-games.ps1
+#             (Mesa3D OpenGL software, launcher Minecraft resmi, paket SA-MP/GTA SA)
 # Installer lewat winget (bawaan image Windows GitHub), fallback Chocolatey.
 $ErrorActionPreference = "Continue"
 $script:RdpTag = "RDPfread:preset"
@@ -31,6 +33,9 @@ $catalog = @{
     "OBSProject.OBSStudio"       = @{ Name = "OBS Studio";  Choco = "obs-studio" }
     "Mozilla.Firefox"            = @{ Name = "Firefox";     Choco = "firefox" }
     "SumatraPDF.SumatraPDF"      = @{ Name = "SumatraPDF";  Choco = "sumatrapdf" }
+    "EclipseAdoptium.Temurin.21.JDK" = @{ Name = "JDK 21 Temurin"; Choco = "temurin21" }
+    "EclipseAdoptium.Temurin.8.JRE"  = @{ Name = "JRE 8 Temurin";  Choco = "temurin8" }
+    "PrismLauncher.PrismLauncher"    = @{ Name = "PrismLauncher";  Choco = "prismlauncher" }
 }
 $plan = @{
     "minimal" = @()
@@ -39,6 +44,7 @@ $plan = @{
     "dev"     = @("OpenJS.NodeJS.LTS", "Python.Python.3.12", "Git.Git", "Microsoft.VisualStudioCode")
     "full"    = @("OpenJS.NodeJS.LTS", "Python.Python.3.12", "Git.Git", "Microsoft.VisualStudioCode", "Microsoft.PowerShell", "Microsoft.WindowsTerminal", "Google.Chrome", "7zip.7zip", "Notepad++.Notepad++")
     "desktop" = @("OpenJS.NodeJS.LTS", "Python.Python.3.12", "Git.Git", "Microsoft.VisualStudioCode", "Microsoft.PowerShell", "Microsoft.WindowsTerminal", "Google.Chrome", "7zip.7zip", "Notepad++.Notepad++", "Microsoft.PowerToys", "VideoLAN.VLC", "LibreOffice.LibreOffice", "OBSProject.OBSStudio")
+    "game"    = @("Mozilla.Firefox", "7zip.7zip", "Microsoft.PowerShell", "EclipseAdoptium.Temurin.21.JDK", "EclipseAdoptium.Temurin.8.JRE", "PrismLauncher.PrismLauncher")
 }
 if (-not $plan.ContainsKey($preset)) { Write-Warn "Preset tidak dikenal: $preset - diperlakukan sebagai minimal."; $preset = "minimal" }
 
@@ -73,3 +79,9 @@ $tools = [PSCustomObject]@{
 }
 Update-Status @{ tools = $tools }
 Write-Log ("Tools: node={0} python={1} git={2} code={3}" -f $tools.node, $tools.python, $tools.git, $tools.code)
+
+# Preset game: lanjutkan ke paket game khusus (Mesa3D, Minecraft, SA-MP/GTA SA)
+if ($preset -eq "game") {
+    Write-Log "Melanjutkan ke setup-games.ps1..."
+    & (Join-Path $PSScriptRoot "setup-games.ps1")
+}

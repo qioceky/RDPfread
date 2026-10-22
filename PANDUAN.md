@@ -28,6 +28,7 @@ Untuk notifikasi Telegram: buat bot via @BotFather → dapat token; kirim pesan 
    - Butuh semuanya + browser → preset `full`.
    - Mau buat harian/kantor yang ringan (Firefox, LibreOffice pengganti Word/Excel, PDF) → preset `ringan`.
    - Mau desktop Windows lengkap (PowerToys, VLC, LibreOffice, OBS) → preset `desktop`.
+   - Mau main game ringan → preset `game` (Minecraft Java + Prism, GTA SA/SA-MP). Catatan game: VM tidak punya GPU (render software) — Minecraft Java setting rendah & GTA SA era 2004 yang realistis. GTA SA-nya dari salinan milikmu sendiri: taruh di `C:\RDPData\GTASA` (ada `gta_sa.exe`), lalu jalankan sesi preset `game` berikutnya — patch-nya (ASI Loader, SilentPatch, dgVoodoo2, SA-MP) dipasang otomatis. Folder game tidak ikut state (terlalu besar untuk batas Release GitHub), tapi world Minecraft & instance PrismLauncher ikut tersimpan.
    - Mau bisa masuk lewat terminal juga (dari Termux) → set `akses_ssh` = `ya`.
    - `optimasi` biarkan `ya` (default): disk runner dibersihkan & service latar non-esensial dimatikan supaya sesi lebih lega; set `tidak` hanya bila ada service bawaan yang kamu perlukan.
 3. Klik **Run workflow**, tunggu ±3–6 menit sampai step *Setup akses Tailscale* selesai.

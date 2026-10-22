@@ -26,11 +26,11 @@ on:
         type: choice
         options: [windows-2022, windows-2025, windows-latest]
       preset:
-        description: 'Preset software: minimal | ringan (Firefox+LibreOffice+SumatraPDF+7-Zip+Notepad+++PowerShell 7) | web (Node+Python) | dev (web+Git+VS Code) | full (dev+PowerShell 7+Terminal+Chrome) | desktop (full+PowerToys+VLC+LibreOffice+OBS)'
+        description: 'Preset software: minimal | ringan (Firefox+LibreOffice+SumatraPDF+7-Zip+Notepad+++PowerShell 7) | web (Node+Python) | dev (web+Git+VS Code) | full (dev+PowerShell 7+Terminal+Chrome) | desktop (full+PowerToys+VLC+LibreOffice+OBS) | game (ringan+Prism+JDK/JRE+Mesa3D+Minecraft+paket SA-MP/GTA SA)'
         required: false
         default: 'minimal'
         type: choice
-        options: [minimal, ringan, web, dev, full, desktop]
+        options: [minimal, ringan, web, dev, full, desktop, game]
       optimasi:
         description: 'Optimasi storage + debloat ringan (bebaskan disk toolcache/cache, matikan service latar non-esensial)?'
         required: false

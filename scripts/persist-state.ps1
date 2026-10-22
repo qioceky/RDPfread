@@ -39,8 +39,11 @@ foreach ($p in $paths) {
     if ((Get-Item $p).PSIsContainer) {
         # /E semua subfolder, /NFL /NDL senyap, /R:1 /W:1 toleran file terkunci,
         # /XJ lewati junction (hindari loop di AppData), /XD kecualikan folder
-        # cache browser/profile (besar, tidak berguna antar sesi).
-        robocopy $p $dest /E /XJ /NFL /NDL /NJH /NJS /R:1 /W:1 /XD Cache "Code Cache" GPUCache DawnCache GrShaderCache ShaderCache "Service Worker" | Out-Null
+        # cache browser/profile (besar, tidak berguna antar sesi) dan folder
+        # GTASA (game +/-4,7 GB melewati batas asset Release GitHub 2 GB -
+        # lihat setup-games.ps1; tanpa pengecualian ini seluruh state gagal
+        # terunggah untuk user preset game).
+        robocopy $p $dest /E /XJ /NFL /NDL /NJH /NJS /R:1 /W:1 /XD Cache "Code Cache" GPUCache DawnCache GrShaderCache ShaderCache "Service Worker" "C:\RDPData\GTASA" | Out-Null
         # Exit code robocopy 0-7 = sukses; >=8 baru error. Reset supaya tidak
         # terbaca sebagai kegagalan step oleh runner Actions.
         if ($LASTEXITCODE -ge 8) { Write-Warn "robocopy melaporkan error ($LASTEXITCODE) untuk $p" }

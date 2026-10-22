@@ -14,3 +14,5 @@ C:\Users\%RDP_USER%\Music
 C:\Users\%RDP_USER%\AppData\Local\Google\Chrome\User Data
 C:\Users\%RDP_USER%\AppData\Local\Microsoft\Edge\User Data
 C:\Users\%RDP_USER%\AppData\Roaming\Mozilla\Firefox\Profiles
+C:\Users\%RDP_USER%\AppData\Roaming\.minecraft
+C:\Users\%RDP_USER%\AppData\Roaming\PrismLauncher
