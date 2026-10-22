@@ -8,6 +8,8 @@
 #   desktop : full + PowerToys + VLC + LibreOffice + OBS Studio (pengalaman desktop Windows penuh)
 #   game    : ringan + JDK 21 & JRE 8 (Temurin) + PrismLauncher, lalu setup-games.ps1
 #             (Mesa3D OpenGL software, launcher Minecraft resmi, paket SA-MP/GTA SA)
+#   optimize: (tidak ada tambahan - nol software) + debloat berat oleh
+#             debloat-windows.ps1 sebagai step workflow tersendiri (v1.3.0)
 # Installer lewat winget (bawaan image Windows GitHub), fallback Chocolatey.
 $ErrorActionPreference = "Continue"
 $script:RdpTag = "RDPfread:preset"
@@ -45,6 +47,7 @@ $plan = @{
     "full"    = @("OpenJS.NodeJS.LTS", "Python.Python.3.12", "Git.Git", "Microsoft.VisualStudioCode", "Microsoft.PowerShell", "Microsoft.WindowsTerminal", "Google.Chrome", "7zip.7zip", "Notepad++.Notepad++")
     "desktop" = @("OpenJS.NodeJS.LTS", "Python.Python.3.12", "Git.Git", "Microsoft.VisualStudioCode", "Microsoft.PowerShell", "Microsoft.WindowsTerminal", "Google.Chrome", "7zip.7zip", "Notepad++.Notepad++", "Microsoft.PowerToys", "VideoLAN.VLC", "LibreOffice.LibreOffice", "OBSProject.OBSStudio")
     "game"    = @("Mozilla.Firefox", "7zip.7zip", "Microsoft.PowerShell", "EclipseAdoptium.Temurin.21.JDK", "EclipseAdoptium.Temurin.8.JRE", "PrismLauncher.PrismLauncher")
+    "optimize" = @()
 }
 if (-not $plan.ContainsKey($preset)) { Write-Warn "Preset tidak dikenal: $preset - diperlakukan sebagai minimal."; $preset = "minimal" }
 
