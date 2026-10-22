@@ -313,6 +313,7 @@ dispatch_next() {
     -f akses_ssh="${AKSES_SSH:-tidak}" \
     -f timezone="${TZ_NAME:-Asia/Jakarta}" \
     -f perpanjang_otomatis="${PERPANJANG_OTOMATIS:-ya}" \
+    -f debloat="${DEBLOAT_LEVEL:-tidak}" \
     -f linux_mode="${LINUX_MODE:-desktop}" \
     -f fps="${FPS_MODE:-standar}" \
     -f renewal="ya" >/dev/null 2>&1

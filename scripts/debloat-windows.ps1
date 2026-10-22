@@ -1,4 +1,6 @@
-# debloat-windows.ps1 - debloat AGRESIF khusus preset "optimize" (v1.3.0).
+# debloat-windows.ps1 - debloat tingkat BERAT (v1.3.0; sejak v1.5.0 dipilih
+# lewat input debloat untuk preset apa pun, dan otomatis untuk preset
+# "optimize"). Tingkat lanjutannya: debloat-full.ps1 (input debloat=full).
 # Berjalan sebagai step workflow tersendiri SETELAH preset terpasang dan
 # SEBELUM logon pertama, di atas debloat ringan optimize-storage.ps1.
 # Tujuan: sesi RDP seringan & secepat mungkin di VM GitHub sekali pakai

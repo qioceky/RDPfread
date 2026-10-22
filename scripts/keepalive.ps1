@@ -46,6 +46,7 @@ function Send-DispatchNext {
         akses_ssh           = $(if ($env:AKSES_SSH) { $env:AKSES_SSH } else { "tidak" })
         timezone            = $(if ($env:TZ_NAME) { $env:TZ_NAME } else { "Asia/Jakarta" })
         perpanjang_otomatis = $(if ($env:PERPANJANG_OTOMATIS) { $env:PERPANJANG_OTOMATIS } else { "ya" })
+        debloat             = $(if ($env:DEBLOAT_LEVEL) { $env:DEBLOAT_LEVEL } else { "tidak" })
         linux_mode          = $(if ($env:LINUX_MODE) { $env:LINUX_MODE } else { "desktop" })
         fps                 = $(if ($env:FPS_MODE) { $env:FPS_MODE } else { "standar" })
         renewal             = "ya"

@@ -49,6 +49,12 @@ on:
         default: 'ya'
         type: choice
         options: [ya, tidak]
+      debloat:
+        description: 'Tingkat debloat Windows (khusus runner Windows): tidak | berat (AppX bloatware dibuang, Defender RT mati, Ultimate Performance) | full (berat + Store & AppX tambahan dibuang, Defender dinonaktifkan total dicoba, fitur opsional dicabut, DISM cleanup). Preset optimize otomatis minimal berat'
+        required: false
+        default: 'tidak'
+        type: choice
+        options: [tidak, berat, full]
       akses_ssh:
         description: 'Aktifkan OpenSSH Server Windows juga (terminal, user+password sama, hanya tailnet)?'
         required: false
@@ -96,6 +102,7 @@ jobs:
       FPS_MODE: ${{ inputs.fps || 'standar' }}
       PRESET: ${{ inputs.preset || 'minimal' }}
       OPTIMASI: ${{ inputs.optimasi || 'ya' }}
+      DEBLOAT_LEVEL: ${{ inputs.debloat || 'tidak' }}
       AKSES_SSH: ${{ inputs.akses_ssh || 'tidak' }}
       TZ_NAME: ${{ inputs.timezone || 'Asia/Jakarta' }}
       PERPANJANG_OTOMATIS: ${{ inputs.perpanjang_otomatis || 'ya' }}
@@ -167,11 +174,17 @@ jobs:
         shell: pwsh
         run: ./scripts/setup-games.ps1
 
-      - name: Debloat berat (khusus preset optimize)
-        if: ${{ runner.os == 'Windows' && inputs.preset == 'optimize' }}
+      - name: Debloat berat (preset optimize / tingkat berat|full)
+        if: ${{ runner.os == 'Windows' && (inputs.preset == 'optimize' || inputs.debloat == 'berat' || inputs.debloat == 'full') }}
         continue-on-error: true
         shell: pwsh
         run: ./scripts/debloat-windows.ps1
+
+      - name: Debloat FULL (AppX lapis-2, fitur opsional, Defender total, DISM)
+        if: ${{ runner.os == 'Windows' && inputs.debloat == 'full' }}
+        continue-on-error: true
+        shell: pwsh
+        run: ./scripts/debloat-full.ps1
 
       - name: Publish status aktif + notifikasi ready
         if: ${{ runner.os == 'Windows' }}
