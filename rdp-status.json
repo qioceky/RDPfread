@@ -1,0 +1,56 @@
+{
+  "disk_free_gb": 82.7,
+  "optimasi": "ya",
+  "run_number": "19",
+  "os": "Microsoft Windows Server 2022 Datacenter",
+  "ram_gb": 16.0,
+  "expires_at": "2026-10-24T17:04:51Z",
+  "project": "RDPfread",
+  "preset": "optimize",
+  "active": true,
+  "schema": 2,
+  "started_at": "2026-10-24T11:22:51Z",
+  "run_url": "https://github.com/qioceky/RDPfread/actions/runs/40088470647",
+  "timezone": "Asia/Jakarta",
+  "cpu_threads": 4,
+  "rdp_user": "fread",
+  "tailscale_dns": "rdpfread-19.tail53ae5e.ts.net",
+  "hostname": "rdpfread-19",
+  "tailscale_ip": "100.83.176.16",
+  "windows_tweaks": true,
+  "optimasi_hasil": {
+    "disk_free_before_gb": 82.51,
+    "disk_free_after_gb": 89.91,
+    "gained_gb": 7.4
+  },
+  "ssh_enabled": false,
+  "tools": {
+    "node": "v22.23.3",
+    "python": "",
+    "git": "git version 2.56.0.windows.2",
+    "code": ""
+  },
+  "debloat": {
+    "appx_dihapus": 0,
+    "service_dimatikan": 10,
+    "defender_rt_off": true,
+    "ultimate_perf": true,
+    "visual_perf": true,
+    "onedrive": false,
+    "task_dimatikan": 5
+  },
+  "debloat_full": {
+    "appx2_dihapus": 0,
+    "fitur_dihapus": 8,
+    "defender_full": true,
+    "service_full": 16,
+    "edge_policy": true,
+    "dism_cleanup": false
+  },
+  "state": {
+    "saved_at": "2026-10-24T15:00:30Z",
+    "bytes": 91653920,
+    "encrypted": true,
+    "checkpoint": true
+  }
+}
