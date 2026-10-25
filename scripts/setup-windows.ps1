@@ -43,6 +43,14 @@ try {
         Set-ItemProperty -Path $adv -Name "Hidden" -Value 1 -Type DWord
         Set-ItemProperty -Path $adv -Name "ShowSuperHidden" -Value 0 -Type DWord
         Write-Log "Explorer Default User: ekstensi file & file tersembunyi ditampilkan."
+        # Watermark versi desktop (pojok kanan bawah) dimatikan untuk profil
+        # baru: PaintDesktopVersion=0 di hive Default (v1.5.3, permintaan user).
+        # "Test Mode" TIDAK ikut hilang — itu dari test signing image, hanya
+        # bisa hilang lewat reboot — yang hilang hanya teks versi/build.
+        $desk = "Registry::HKEY_USERS\RDPfreadDefault\Control Panel\Desktop"
+        if (-not (Test-Path $desk)) { New-Item -Path $desk -Force | Out-Null }
+        Set-ItemProperty -Path $desk -Name "PaintDesktopVersion" -Value 0 -Type DWord
+        Write-Log "Watermark versi desktop dimatikan untuk profil baru (PaintDesktopVersion=0)."
     } else { Write-Warn "Hive Default User tidak bisa dimuat - tweak Explorer dilewati." }
 } catch { Write-Warn ("Tweak Explorer gagal: " + $_.Exception.Message) }
 finally {
