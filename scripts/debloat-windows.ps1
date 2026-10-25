@@ -23,7 +23,7 @@ $ErrorActionPreference = "Continue"
 $script:RdpTag = "RDPfread:debloat"
 . (Join-Path $PSScriptRoot "lib-common.ps1")
 
-$hasil = [ordered]@{ appx_dihapus = 0; service_dimatikan = 0; defender_rt_off = $false; ultimate_perf = $false; visual_perf = $false; onedrive = $false; task_dimatikan = 0 }
+$hasil = [ordered]@{ appx_dihapus = 0; service_dimatikan = 0; defender_rt_off = $false; ultimate_perf = $false; visual_perf = $false; onedrive = $false; task_dimatikan = 0; default_hive_ok = $true }
 
 # ---------- 1) AppX bloatware ----------
 $removeNames = @(
@@ -137,7 +137,26 @@ try {
             Write-Log "Efek visual profil baru = mode performa (animasi mati, tanpa wallpaper)."
         }
     } finally {
-        if ($loaded) { [System.GC]::Collect(); reg.exe unload "HKU\$hiveName" 2>$null | Out-Null }
+        if ($loaded) {
+            # v1.5.2: pelepasan hive HARUS terverifikasi (pola setup-windows v1.5.1).
+            $unloaded = $false
+            for ($attempt = 1; $attempt -le 3 -and -not $unloaded; $attempt++) {
+                [System.GC]::Collect()
+                [System.GC]::WaitForPendingFinalizers()
+                [System.GC]::Collect()
+                reg.exe unload "HKU\$hiveName" 2>$null | Out-Null
+                Start-Sleep -Seconds 2
+                if (-not (Test-Path "Registry::HKEY_USERS\$hiveName")) { $unloaded = $true }
+            }
+            $fileLocked = $false
+            try {
+                $probe = [System.IO.File]::Open("C:\Users\Default\NTUSER.DAT", [System.IO.FileMode]::Open, [System.IO.FileAccess]::Read, [System.IO.FileShare]::None)
+                $probe.Close()
+                $probe.Dispose()
+            } catch { $fileLocked = $true }
+            $hasil.default_hive_ok = ($unloaded -and -not $fileLocked)
+            if (-not $hasil.default_hive_ok) { Write-Warn "Hive Default User GAGAL dilepas bersih setelah 3 percobaan (lihat status debloat.default_hive_ok)." }
+        }
     }
 } catch { Write-Warn ("Tweak visual dilewati: " + $_.Exception.Message) }
 
@@ -158,4 +177,4 @@ foreach ($t in $taskList) {
 $global:LASTEXITCODE = 0
 
 Update-Status @{ debloat = [PSCustomObject]$hasil }
-Write-Log ("Debloat selesai: appx={0} service={1} defender_rt_off={2} ultimate={3} visual={4} onedrive={5} task={6}" -f $hasil.appx_dihapus, $hasil.service_dimatikan, $hasil.defender_rt_off, $hasil.ultimate_perf, $hasil.visual_perf, $hasil.onedrive, $hasil.task_dimatikan)
+Write-Log ("Debloat selesai: appx={0} service={1} defender_rt_off={2} ultimate={3} visual={4} onedrive={5} task={6} hive_ok={7}" -f $hasil.appx_dihapus, $hasil.service_dimatikan, $hasil.defender_rt_off, $hasil.ultimate_perf, $hasil.visual_perf, $hasil.onedrive, $hasil.task_dimatikan, $hasil.default_hive_ok)

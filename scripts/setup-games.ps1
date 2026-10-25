@@ -340,6 +340,12 @@ try {
 } catch { Write-Warn ("Wesnoth dilewati: " + $_.Exception.Message) }
 
 # ---------- 7) Mouse tanpa akselerasi ----------
+# v1.5.2: pelepasan hive HARUS terverifikasi (pola yang sama dengan
+# setup-windows v1.5.1). Edit hive ini hanya ada di jalur game dan TIDAK
+# ikut dikeraskan v1.5.1 — tersangka terkuat kegagalan ProfSvc #23/#24/#25
+# (gagal meski default_hive_ok=True). $gamesHiveOk = $true berarti tidak ada
+# hive terkunci yang ditinggalkan script ini (termasuk bila hive gagal dimuat).
+$gamesHiveOk = $true
 try {
     $hiveName = "RDPfreadDefGame"
     $loaded = $false
@@ -353,10 +359,31 @@ try {
             Set-ItemProperty -Path $mp -Name MouseThreshold1 -Value "0" -ErrorAction SilentlyContinue
             Set-ItemProperty -Path $mp -Name MouseThreshold2 -Value "0" -ErrorAction SilentlyContinue
         }
-    } finally { if ($loaded) { reg.exe unload "HKU\$hiveName" 2>$null | Out-Null } }
-    Write-Log "Akselerasi mouse dimatikan untuk profil baru (Default User)."
+    } finally {
+        if ($loaded) {
+            $unloaded = $false
+            for ($attempt = 1; $attempt -le 3 -and -not $unloaded; $attempt++) {
+                [System.GC]::Collect()
+                [System.GC]::WaitForPendingFinalizers()
+                [System.GC]::Collect()
+                reg.exe unload "HKU\$hiveName" 2>$null | Out-Null
+                Start-Sleep -Seconds 2
+                if (-not (Test-Path "Registry::HKEY_USERS\$hiveName")) { $unloaded = $true }
+            }
+            $fileLocked = $false
+            try {
+                $probe = [System.IO.File]::Open("C:\Users\Default\NTUSER.DAT", [System.IO.FileMode]::Open, [System.IO.FileAccess]::Read, [System.IO.FileShare]::None)
+                $probe.Close()
+                $probe.Dispose()
+            } catch { $fileLocked = $true }
+            $gamesHiveOk = ($unloaded -and -not $fileLocked)
+            if (-not $gamesHiveOk) { Write-Warn "Hive Default User GAGAL dilepas bersih setelah 3 percobaan (lihat status games_default_hive_ok)." }
+        }
+    }
+    if ($loaded) { if ($gamesHiveOk) { Write-Log "Akselerasi mouse dimatikan untuk profil baru (Default User)." } }
+    else { Write-Log "Hive Default User tidak bisa dimuat - tweak mouse dilewati." }
 } catch { Write-Log "Tweak mouse dilewati (best effort)." }
 
-Update-Status @{ games = [PSCustomObject]$result }
+Update-Status @{ games = [PSCustomObject]$result; games_default_hive_ok = $gamesHiveOk }
 Write-Log ("Paket game selesai: prasyarat={0} mesa={1} mc-launcher={2} gtasa={3} samp={4} patch={5}" -f $result.prasyarat, $result.mesa, $result.minecraft_launcher, $result.gtasa, $result.samp, $result.patch_gtasa)
 Write-Log ("Game tambahan: mindustry={0} luanti={1} gzdoom={2} openttd={3} supertuxkart={4} wesnoth={5}" -f $result.mindustry, $result.luanti, $result.gzdoom, $result.openttd, $result.supertuxkart, $result.wesnoth)

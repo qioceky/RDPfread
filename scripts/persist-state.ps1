@@ -179,6 +179,37 @@ Write-Log ("State tersimpan lokal: {0} ({1:N0} bytes, encrypted={2})" -f (Split-
 
 if ($bytes -gt 1900MB) { Write-Warn "Arsip > 1,9 GB - upload Release dilewati (artifact tetap dicoba dari workflow)."; return }
 
+# --- Guard anti-timpa state (v1.5.2) ---
+# Pelajaran insiden ProfSvc 2026-10-25: sesi yang tak pernah login menimpa
+# state bagus (±105 MB) dengan arsip nyaris kosong (±1,5 KB) lewat checkpoint
+# maupun finalize. Lewati upload bila SEMUA kondisi ini benar: (a) tidak ada
+# profil user sungguhan di VM ini (belum pernah login), (b) asset Release yang
+# ada jauh lebih besar dari arsip baru (remote > 10 MB, baru < 1 MB).
+# Fail-open: bila ukuran remote tidak bisa dibaca, perilaku lama (upload).
+# Fingerprint lama ikut dipertahankan (tidak diunggah) supaya checkpoint
+# berikutnya tetap membandingkan dengan state yang benar.
+try {
+    $profileExists = $false
+    if ($realProfile -and (Test-Path $realProfile)) { $profileExists = $true }
+    elseif (Test-Path $canonProfile) { $profileExists = $true }
+    if (-not $profileExists) {
+        $ghQ = Get-GhExe
+        if ($ghQ -and $env:GITHUB_REPOSITORY) {
+            # gh memakai token runner (GITHUB_TOKEN) secara otomatis; tidak perlu set GH_TOKEN di sini.
+            $sizeOut = & $ghQ release view rdpfread-state-latest --repo $env:GITHUB_REPOSITORY --json assets --jq '.assets[] | select(.name | startswith("rdpfread-state.tar.gz")) | .size' 2>$null | Out-String
+            $remoteSize = 0L
+            foreach ($line in ($sizeOut -split "`n")) {
+                $v = 0L
+                if ([long]::TryParse($line.Trim(), [ref]$v) -and $v -gt $remoteSize) { $remoteSize = $v }
+            }
+            if ($remoteSize -gt 10MB -and $bytes -lt 1MB) {
+                Write-Warn ("Guard anti-timpa: upload dilewati - tidak ada profil user (belum login) dan arsip baru {0:N0} bytes jauh lebih kecil dari asset Release {1:N0} bytes. State lama dipertahankan; state lokal tetap ada sebagai artifact." -f $bytes, $remoteSize)
+                return
+            }
+        }
+    }
+} catch { Write-Warn ("Guard anti-timpa gagal dibaca (fail-open, upload tetap jalan): " + $_.Exception.Message) }
+
 # --- Upload ke Release tetap ---
 $gh = Get-GhExe
 if ($gh -and $env:GITHUB_REPOSITORY) {

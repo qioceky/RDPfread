@@ -31,7 +31,7 @@ $ErrorActionPreference = "Continue"
 $script:RdpTag = "RDPfread:debloat-full"
 . (Join-Path $PSScriptRoot "lib-common.ps1")
 
-$hasil = [ordered]@{ appx2_dihapus = 0; fitur_dihapus = 0; defender_full = $false; service_full = 0; edge_policy = $false; dism_cleanup = $false }
+$hasil = [ordered]@{ appx2_dihapus = 0; fitur_dihapus = 0; defender_full = $false; service_full = 0; edge_policy = $false; dism_cleanup = $false; default_hive_ok = $true }
 
 # ---------- 1) AppX lapis-2 ----------
 $removeNames2 = @(
@@ -161,7 +161,26 @@ try {
             Write-Log "Spotlight & konten saran lock screen dimatikan untuk profil baru."
         }
     } finally {
-        if ($loaded) { [System.GC]::Collect(); reg.exe unload "HKU\$hiveName" 2>$null | Out-Null }
+        if ($loaded) {
+            # v1.5.2: pelepasan hive HARUS terverifikasi (pola setup-windows v1.5.1).
+            $unloaded = $false
+            for ($attempt = 1; $attempt -le 3 -and -not $unloaded; $attempt++) {
+                [System.GC]::Collect()
+                [System.GC]::WaitForPendingFinalizers()
+                [System.GC]::Collect()
+                reg.exe unload "HKU\$hiveName" 2>$null | Out-Null
+                Start-Sleep -Seconds 2
+                if (-not (Test-Path "Registry::HKEY_USERS\$hiveName")) { $unloaded = $true }
+            }
+            $fileLocked = $false
+            try {
+                $probe = [System.IO.File]::Open("C:\Users\Default\NTUSER.DAT", [System.IO.FileMode]::Open, [System.IO.FileAccess]::Read, [System.IO.FileShare]::None)
+                $probe.Close()
+                $probe.Dispose()
+            } catch { $fileLocked = $true }
+            $hasil.default_hive_ok = ($unloaded -and -not $fileLocked)
+            if (-not $hasil.default_hive_ok) { Write-Warn "Hive Default User GAGAL dilepas bersih setelah 3 percobaan (lihat status debloat_full.default_hive_ok)." }
+        }
     }
 } catch { Write-Warn ("Tweak ContentDeliveryManager dilewati: " + $_.Exception.Message) }
 
@@ -178,4 +197,4 @@ try {
 } catch { Write-Warn ("DISM cleanup dilewati: " + $_.Exception.Message) }
 
 Update-Status @{ debloat_full = [PSCustomObject]$hasil }
-Write-Log ("Debloat FULL selesai: appx2={0} fitur={1} defender_full={2} service={3} edge_policy={4} dism={5}" -f $hasil.appx2_dihapus, $hasil.fitur_dihapus, $hasil.defender_full, $hasil.service_full, $hasil.edge_policy, $hasil.dism_cleanup)
+Write-Log ("Debloat FULL selesai: appx2={0} fitur={1} defender_full={2} service={3} edge_policy={4} dism={5} hive_ok={6}" -f $hasil.appx2_dihapus, $hasil.fitur_dihapus, $hasil.defender_full, $hasil.service_full, $hasil.edge_policy, $hasil.dism_cleanup, $hasil.default_hive_ok)
