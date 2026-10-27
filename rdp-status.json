@@ -1,41 +1,17 @@
 {
-  "schema": 2,
-  "preset": "ringan",
-  "run_number": "34",
-  "disk_free_gb": 81.7,
-  "expires_at": "2026-10-27T13:35:45Z",
-  "ram_gb": 16.0,
-  "timezone": "Asia/Jakarta",
+  "active": true,
+  "mode": "linux-desktop-ringan",
+  "os": "ubuntu-24.04",
+  "hostname": "rdpfread-35",
+  "tailscale_ip": "100.98.173.95",
+  "dns_name": "rdpfread-35.tail53ae5e.ts.net",
   "rdp_user": "fread",
-  "project": "RDPfread",
-  "cpu_threads": 4,
-  "active": false,
-  "os": "Microsoft Windows Server 2022 Datacenter",
-  "run_url": "https://github.com/qioceky/RDPfread/actions/runs/40469859351",
-  "started_at": "2026-10-27T07:53:45Z",
-  "optimasi": "ya",
-  "profile_merge": "menunggu-logon",
-  "tailscale_dns": "rdpfread-34.tail53ae5e.ts.net",
-  "tailscale_ip": "100.89.21.114",
-  "hostname": "rdpfread-34",
-  "default_hive_ok": true,
-  "windows_tweaks": true,
-  "optimasi_hasil": {
-    "disk_free_before_gb": 81.52,
-    "disk_free_after_gb": 89.33,
-    "gained_gb": 7.81
-  },
-  "ssh_enabled": false,
-  "tools": {
-    "node": "v22.23.4",
-    "python": "",
-    "git": "git version 2.56.0.windows.3",
-    "code": ""
-  },
-  "state": {
-    "saved_at": "2026-10-27T08:02:48Z",
-    "bytes": 1456,
-    "encrypted": true,
-    "checkpoint": false
-  }
+  "preset": "linux-desktop-ringan",
+  "linux_mode": "desktop-ringan",
+  "started_at": "2026-10-27T08:04:37Z",
+  "expires_at": "2026-10-27T13:46:37Z",
+  "duration_menit": 342,
+  "run_number": "35",
+  "run_id": "40471026687",
+  "updated_at": "2026-10-27T08:07:38Z"
 }
