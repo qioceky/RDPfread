@@ -26,6 +26,7 @@ Untuk notifikasi Telegram: buat bot via @BotFather → dapat token; kirim pesan 
    - Mau Linux desktop → runner `ubuntu-24.04` + `linux_mode=desktop`: dapat XFCE4 lewat RDP (:3389) + SSH, user & password sama seperti sesi Windows.
    - Mau Linux desktop ringan → runner `ubuntu-24.04` + `linux_mode=desktop-ringan`: XFCE4 + Firefox + LibreOffice lewat RDP.
    - Mau Linux desktop dev → runner `ubuntu-24.04` + `linux_mode=desktop-dev`: XFCE4 + VS Code (Git/Node/Python sudah bawaan image) lewat RDP.
+   - Mau macOS → runner `macos-14` (atau 15/latest): dapat desktop macOS lewat VNC (:5900) + SSH, user & password sama seperti sesi lain — tapi ingat, dari HP butuh aplikasi VNC (bukan klien RDP), dan password VNC hanya 8 karakter pertama RDP_PASSWORD.
    - Mau Linux terminal saja → runner `ubuntu-24.04` + `linux_mode=polos`: SSH murni, paling ringan. Home + identitas Tailscale-mu tersimpan antar sesi Linux.
    - Mau RDP Windows lebih mulus → input `fps=120` (menaikkan plafon frame sesi RDP; hasil nyata tergantung aplikasi klien & jaringan).
    - Butuh Node/Python → preset `web`.

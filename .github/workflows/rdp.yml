@@ -1,5 +1,5 @@
 # rdpfread-workflow-schema: 1
-name: RDPfread — Sesi 6 Jam Pro (Windows/Linux)
+name: RDPfread — Sesi 6 Jam Pro (Windows/Linux/macOS)
 
 on:
   workflow_dispatch:
@@ -20,11 +20,11 @@ on:
         default: 'fread'
         type: string
       runner:
-        description: 'OS & image runner: Windows Server (RDP) atau Linux (mode: input linux_mode)'
+        description: 'OS & image runner: Windows Server (RDP), Linux (mode: input linux_mode), atau macOS (VNC :5900 + SSH)'
         required: false
         default: 'windows-2022'
         type: choice
-        options: [windows-2022, windows-2025, windows-latest, ubuntu-24.04, ubuntu-22.04, ubuntu-latest]
+        options: [windows-2022, windows-2025, windows-latest, ubuntu-24.04, ubuntu-22.04, ubuntu-latest, macos-14, macos-15, macos-latest]
       linux_mode:
         description: 'Mode Linux (hanya berlaku bila runner Ubuntu): desktop = XFCE4 + XRDP (RDP :3389) + SSH | desktop-ringan = desktop + Firefox + LibreOffice | desktop-dev = desktop + VS Code (Git/Node/Python sudah bawaan image) | polos = SSH saja tanpa desktop'
         required: false
@@ -265,3 +265,29 @@ jobs:
         continue-on-error: true
         shell: bash
         run: ./scripts/setup-linux.sh --finalize
+
+      - name: Bersihkan run lama (macOS)
+        if: ${{ runner.os == 'macOS' }}
+        continue-on-error: true
+        shell: bash
+        run: |
+          ids=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow rdp.yml --limit 60 --json databaseId --jq '.[10:] | .[].databaseId' 2>/dev/null || true)
+          for id in $ids; do gh run delete "$id" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1 || true; done
+
+      - name: Setup sesi macOS (user, Tailscale, VNC, SSH, state)
+        if: ${{ runner.os == 'macOS' }}
+        shell: bash
+        run: |
+          chmod +x ./scripts/setup-macos.sh
+          ./scripts/setup-macos.sh --setup
+
+      - name: Jaga sesi macOS hidup (heartbeat, checkpoint, handover, auto-stop)
+        if: ${{ runner.os == 'macOS' }}
+        shell: bash
+        run: ./scripts/setup-macos.sh --keepalive
+
+      - name: Finalize sesi macOS (state final, status off, notifikasi)
+        if: ${{ always() && runner.os == 'macOS' }}
+        continue-on-error: true
+        shell: bash
+        run: ./scripts/setup-macos.sh --finalize

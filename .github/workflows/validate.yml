@@ -27,9 +27,10 @@ jobs:
       - name: bash -n + shellcheck (severity error)
         run: |
           bash -n scripts/setup-linux.sh && echo "bash -n OK: setup-linux.sh"
+          bash -n scripts/setup-macos.sh && echo "bash -n OK: setup-macos.sh"
           bash -n setup-wizard.sh && echo "bash -n OK: setup-wizard.sh"
           if command -v shellcheck >/dev/null 2>&1; then
-            shellcheck -S error scripts/setup-linux.sh setup-wizard.sh && echo "shellcheck OK"
+            shellcheck -S error scripts/setup-linux.sh scripts/setup-macos.sh setup-wizard.sh && echo "shellcheck OK"
           else
             echo "shellcheck tidak tersedia - dilewati."
           fi
