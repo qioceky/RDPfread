@@ -55,27 +55,8 @@ try {
 } catch { Write-Warn ("Tweak Explorer gagal: " + $_.Exception.Message) }
 finally {
     if ($hiveLoaded) {
-        # Pelepasan hive HARUS terverifikasi (pelajaran insiden ProfSvc
-        # 2026-10-25): unload sekali + error disembunyikan pernah membuat
-        # NTUSER.DAT Default tetap terkunci, sehingga Windows gagal membuat
-        # profil baru. Coba ulang 3x dengan jeda + GC penuh, lalu verifikasi
-        # dua lapis: mount hive benar-benar hilang DAN file tidak terkunci.
-        $unloaded = $false
-        for ($attempt = 1; $attempt -le 3 -and -not $unloaded; $attempt++) {
-            [System.GC]::Collect()
-            [System.GC]::WaitForPendingFinalizers()
-            [System.GC]::Collect()
-            reg unload "HKU\RDPfreadDefault" 2>$null | Out-Null
-            Start-Sleep -Seconds 2
-            if (-not (Test-Path "Registry::HKEY_USERS\RDPfreadDefault")) { $unloaded = $true }
-        }
-        $fileLocked = $false
-        try {
-            $probe = [System.IO.File]::Open("C:\Users\Default\NTUSER.DAT", [System.IO.FileMode]::Open, [System.IO.FileAccess]::Read, [System.IO.FileShare]::None)
-            $probe.Close()
-            $probe.Dispose()
-        } catch { $fileLocked = $true }
-        $defaultHiveOk = ($unloaded -and -not $fileLocked)
+        # Pelepasan hive terverifikasi via helper bersama (lib-common, v1.5.4).
+        $defaultHiveOk = Invoke-VerifiedHiveUnload -HiveName "RDPfreadDefault"
         if ($defaultHiveOk) { Write-Log "Hive Default User dilepas & terverifikasi tidak terkunci." }
         else { Write-Warn "Hive Default User GAGAL dilepas bersih setelah 3 percobaan - profil baru berisiko gagal dibuat (lihat status default_hive_ok)." }
     }

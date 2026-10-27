@@ -361,22 +361,8 @@ try {
         }
     } finally {
         if ($loaded) {
-            $unloaded = $false
-            for ($attempt = 1; $attempt -le 3 -and -not $unloaded; $attempt++) {
-                [System.GC]::Collect()
-                [System.GC]::WaitForPendingFinalizers()
-                [System.GC]::Collect()
-                reg.exe unload "HKU\$hiveName" 2>$null | Out-Null
-                Start-Sleep -Seconds 2
-                if (-not (Test-Path "Registry::HKEY_USERS\$hiveName")) { $unloaded = $true }
-            }
-            $fileLocked = $false
-            try {
-                $probe = [System.IO.File]::Open("C:\Users\Default\NTUSER.DAT", [System.IO.FileMode]::Open, [System.IO.FileAccess]::Read, [System.IO.FileShare]::None)
-                $probe.Close()
-                $probe.Dispose()
-            } catch { $fileLocked = $true }
-            $gamesHiveOk = ($unloaded -and -not $fileLocked)
+            # Pelepasan hive terverifikasi via helper bersama (lib-common, v1.5.4).
+            $gamesHiveOk = Invoke-VerifiedHiveUnload -HiveName $hiveName
             if (-not $gamesHiveOk) { Write-Warn "Hive Default User GAGAL dilepas bersih setelah 3 percobaan (lihat status games_default_hive_ok)." }
         }
     }

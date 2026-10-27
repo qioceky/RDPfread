@@ -138,23 +138,8 @@ try {
         }
     } finally {
         if ($loaded) {
-            # v1.5.2: pelepasan hive HARUS terverifikasi (pola setup-windows v1.5.1).
-            $unloaded = $false
-            for ($attempt = 1; $attempt -le 3 -and -not $unloaded; $attempt++) {
-                [System.GC]::Collect()
-                [System.GC]::WaitForPendingFinalizers()
-                [System.GC]::Collect()
-                reg.exe unload "HKU\$hiveName" 2>$null | Out-Null
-                Start-Sleep -Seconds 2
-                if (-not (Test-Path "Registry::HKEY_USERS\$hiveName")) { $unloaded = $true }
-            }
-            $fileLocked = $false
-            try {
-                $probe = [System.IO.File]::Open("C:\Users\Default\NTUSER.DAT", [System.IO.FileMode]::Open, [System.IO.FileAccess]::Read, [System.IO.FileShare]::None)
-                $probe.Close()
-                $probe.Dispose()
-            } catch { $fileLocked = $true }
-            $hasil.default_hive_ok = ($unloaded -and -not $fileLocked)
+            # Pelepasan hive terverifikasi via helper bersama (lib-common, v1.5.4).
+            $hasil.default_hive_ok = Invoke-VerifiedHiveUnload -HiveName $hiveName
             if (-not $hasil.default_hive_ok) { Write-Warn "Hive Default User GAGAL dilepas bersih setelah 3 percobaan (lihat status debloat.default_hive_ok)." }
         }
     }

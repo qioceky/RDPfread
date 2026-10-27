@@ -155,3 +155,33 @@ function Get-ProfileDirForUser {
     return "C:\Users\$User"
 }
 function Get-ProfileStagingRoot { return "C:\RDPData\.profil-restore" }
+
+# --- Pelepasan hive Default User terverifikasi (v1.5.4) ---
+# Disatukan dari 4 skrip (setup-windows, setup-games, debloat-windows,
+# debloat-full) yang sebelumnya masing-masing menduplikasi blok ~20 baris
+# yang sama — duplikasi itulah yang membuat hardening v1.5.1 tertinggal di
+# setup-games/debloat sampai v1.5.2. Perbaikan berikutnya cukup di sini.
+# Mengembalikan $true bila mount hive benar-benar hilang DAN file
+# NTUSER.DAT Default tidak terkunci (bisa dibuka eksklusif); $false bila
+# gagal setelah 3 percobaan. Pelajaran insiden ProfSvc 2026-10-25: unload
+# sekali + error disembunyikan pernah membuat NTUSER.DAT tetap terkunci,
+# sehingga Windows gagal membuat profil baru.
+function Invoke-VerifiedHiveUnload {
+    param([string]$HiveName)
+    $unloaded = $false
+    for ($attempt = 1; $attempt -le 3 -and -not $unloaded; $attempt++) {
+        [System.GC]::Collect()
+        [System.GC]::WaitForPendingFinalizers()
+        [System.GC]::Collect()
+        reg.exe unload "HKU\$HiveName" 2>$null | Out-Null
+        Start-Sleep -Seconds 2
+        if (-not (Test-Path "Registry::HKEY_USERS\$HiveName")) { $unloaded = $true }
+    }
+    $fileLocked = $false
+    try {
+        $probe = [System.IO.File]::Open("C:\Users\Default\NTUSER.DAT", [System.IO.FileMode]::Open, [System.IO.FileAccess]::Read, [System.IO.FileShare]::None)
+        $probe.Close()
+        $probe.Dispose()
+    } catch { $fileLocked = $true }
+    return ($unloaded -and -not $fileLocked)
+}
