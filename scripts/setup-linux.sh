@@ -324,6 +324,28 @@ export XDG_CONFIG_DIRS=/etc/xdg:${XDG_CONFIG_DIRS:-/etc/xdg}
 exec dbus-launch --exit-with-session startxfce4
 EOF
       sudo chmod +x /etc/xrdp/startwm.sh
+      # v1.7.3: matikan compositing xfwm4 secara default. Compositing
+      # (transparansi/bayangan) mahal di RDP dan terasa sebagai lag di
+      # link jauh; untuk sesi remote, nonaktif adalah default yang benar.
+      # Ditulis ke default sistem /etc/xdg agar berlaku untuk user baru.
+      sudo python3 - <<'PYEOF' 2>/dev/null || true
+import os, xml.etree.ElementTree as ET
+p = '/etc/xdg/xfce4/xfconf/xfce-perchannel-xml/xfwm4.xml'
+os.makedirs(os.path.dirname(p), exist_ok=True)
+if os.path.exists(p):
+    t = ET.parse(p); r = t.getroot()
+else:
+    r = ET.Element('channel', {'name': 'xfwm4', 'version': '1.0'}); t = ET.ElementTree(r)
+g = r.find("property[@name='general']")
+if g is None:
+    g = ET.SubElement(r, 'property', {'name': 'general', 'type': 'empty'})
+c = g.find("property[@name='use_compositing']")
+if c is None:
+    c = ET.SubElement(g, 'property', {'name': 'use_compositing', 'type': 'bool', 'value': 'false'})
+else:
+    c.set('value', 'false')
+t.write(p, encoding='UTF-8', xml_declaration=True)
+PYEOF
       case "${LINUX_MODE:-desktop}" in
         desktop-ringan)
           log "Varian ringan: memasang Firefox (repo resmi Mozilla, .deb) + LibreOffice..."
