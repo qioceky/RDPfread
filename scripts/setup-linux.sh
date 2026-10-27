@@ -300,7 +300,13 @@ do_setup() {
       done
       [ "$ok" = "1" ] || warn "Install XFCE4/XRDP bermasalah - periksa log step ini"
       echo "xfce4-session" | sudo -u "$user" tee "/home/$user/.xsession" >/dev/null
-      sudo sed -i 's/^max_bpp=.*/max_bpp=32/' /etc/xrdp/xrdp.ini 2>/dev/null || true
+      # v1.7.4: batasi warna sesi ke 16-bit. Di link HP jarak jauh, 32-bit
+      # menggandakan data gambar dibanding 16-bit tanpa manfaat nyata di
+      # layar HP (hanya gradasi foto/wallpaper yang sedikit banding).
+      # Ini pemangkas bandwidth terbesar di sisi server; klien tetap
+      # bisa nego di bawah cap ini. Balikkan ke 32 bila warna penuh
+      # lebih penting daripada respons.
+      sudo sed -i 's/^max_bpp=.*/max_bpp=16/' /etc/xrdp/xrdp.ini 2>/dev/null || true
       sudo sed -i 's/^tcp_nodelay=.*/tcp_nodelay=true/' /etc/xrdp/xrdp.ini 2>/dev/null || true
       sudo adduser xrdp ssl-cert >/dev/null 2>&1 || true
       # v1.7.2: startwm.sh bawaan Ubuntu tidak menyiapkan D-Bus dan
