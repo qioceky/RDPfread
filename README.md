@@ -38,11 +38,11 @@ Satu input `runner` saat Run workflow menentukan OS sesi. Estafet otomatis mener
 |---|---|---|---|---|
 | **Windows Server** | `windows-2022`, `windows-2025`, `windows-latest` | RDP (+ SSH opsional) | 3389 (RDP), 22 (SSH bila `akses_ssh=ya`) | `rdpfread-state.tar.gz[.enc]` |
 | **Linux** | `ubuntu-24.04`, `ubuntu-22.04`, `ubuntu-latest` | RDP (desktop) / SSH | 3389 (RDP), 22 (SSH) | `rdpfread-state-linux.tar.gz[.enc]` |
-| **macOS** | `macos-14`, `macos-15`, `macos-latest` | VNC + SSH | 5900 (VNC), 22 (SSH) | `rdpfread-state-macos.tar.gz[.enc]` |
+| **macOS** ⚠️ | `macos-14`, `macos-15`, `macos-latest` | VNC + SSH (⚠️ display VNC belum jalan — uji 27 Okt 2026) | 5900 (VNC), 22 (SSH) | `rdpfread-state-macos.tar.gz[.enc]` |
 
 Mode Linux diatur input `linux_mode`: `desktop` (XFCE4 + XRDP + SSH), `desktop-ringan` (desktop + Firefox + LibreOffice), `desktop-dev` (desktop + VS Code; Git/Node/Python sudah bawaan image), atau `polos` (SSH saja, paling ringan).
 
-Catatan macOS: macOS tidak punya RDP bawaan, jadi yang dipakai adalah **VNC (Screen Sharing)** — dari HP butuh aplikasi VNC (mis. RealVNC Viewer/AVNC), bukan klien RDP. Password VNC dibatasi **8 karakter** oleh protokol VNC legacy: bila `RDP_PASSWORD`-mu lebih panjang, login VNC memakai 8 karakter pertamanya (SSH memakai password penuh).
+Catatan macOS: macOS tidak punya RDP bawaan, jadi yang dipakai adalah **VNC (Screen Sharing)** — dari HP butuh aplikasi VNC (mis. RealVNC Viewer/AVNC), bukan klien RDP. Password VNC dibatasi **8 karakter** oleh protokol VNC legacy: bila `RDP_PASSWORD`-mu lebih panjang, login VNC memakai 8 karakter pertamanya (SSH memakai password penuh). **Hasil uji lapangan 27 Okt 2026: koneksi + autentikasi VNC lolos dan kursor tampil, tapi display hitam di AVNC maupun RealVNC meski sudah restart agen, allow-all-users, dan reset WindowServer — dukungan VNC macOS dinyatakan BELUM support sampai display terpecahkan; SSH macOS jalan normal.**
 
 ---
 
@@ -181,7 +181,7 @@ setup-wizard.sh      # wizard setup lokal (Linux/Termux) via gh CLI
 - Gunakan auth key Tailscale yang bisa dicabut (reusable + ephemeral lebih aman), dan cabut bila perangkat hilang.
 - **Watermark "Test Mode" (Windows):** image GitHub mengaktifkan test signing, jadi pojok kanan bawah menampilkan "Test Mode". Menghilangkannya butuh `bcdedit testsigning off` + reboot — reboot mematikan sesi, jadi watermark ini sengaja dibiarkan (kosmetik, tanpa efek fungsi).
 - **Latensi:** runner GitHub umumnya di AS — dari Indonesia, latensi RDP ±200–250 ms + relay DERP adalah normal.
-- **macOS VNC:** aktivasi Screen Sharing + login VNC dari HP masih dalam tahap uji lapangan pertama; bila VNC gagal connect, laporkan log step setup macOS-nya.
+- **macOS VNC — BELUM SUPPORT (27 Okt 2026):** uji lapangan pertama membuktikan display hitam di semua klien (AVNC, RealVNC) meski koneksi + autentikasi lolos, setelah restart agen, allow-all-users, dan reset WindowServer. Penyebab display belum teridentifikasi; SSH macOS jalan normal. Dukungan VNC macOS ditahan sampai display terpecahkan.
 
 ## 📡 Status live
 
@@ -192,7 +192,7 @@ Sesi yang sedang berjalan (bila ada) bisa dipantau tanpa membuka log Actions:
 
 ## 🗺️ Rencana berikut
 
-- Uji lapangan VNC macOS (aktivasi Screen Sharing + login dari HP).
+- Perbaiki display VNC macOS (uji 27 Okt: connect OK, display hitam di semua klien; bug persist state macOS diperbaiki di v1.7.1).
 - Uji varian desktop Linux (`desktop-ringan`/`desktop-dev`) sekaligus bukti ulang connect XRDP.
 - Opsi runner/mode baru di Panel aplikasi RDPfread XD (dispatch 1-tap).
 - Tes ulang preset game pasca-hardening hive v1.5.2 (tes ini menggantikan sesi yang sedang jalan).

@@ -177,6 +177,10 @@ persist_state() {
   if [ -n "$ts_src" ]; then
     echo "$ts_src" > "$dir/stage/_tailscale_src"
     sudo cp -pR "$ts_src/." "$dir/stage/_tailscale/" 2>/dev/null || true
+    # v1.7.1: file hasil sudo cp milik root - tanpa chown ini, tar yang
+    # jalan sebagai user runner tidak bisa membaca stage dan persist
+    # selalu gagal ("tar state gagal" di semua checkpoint run #33).
+    sudo chown -R "$(id -u):$(id -g)" "$dir/stage/_tailscale" 2>/dev/null || true
     log "State Tailscale ditemukan di $ts_src - ikut diarsipkan."
   else
     rmdir "$dir/stage/_tailscale" 2>/dev/null || true
