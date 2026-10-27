@@ -303,6 +303,27 @@ do_setup() {
       sudo sed -i 's/^max_bpp=.*/max_bpp=32/' /etc/xrdp/xrdp.ini 2>/dev/null || true
       sudo sed -i 's/^tcp_nodelay=.*/tcp_nodelay=true/' /etc/xrdp/xrdp.ini 2>/dev/null || true
       sudo adduser xrdp ssl-cert >/dev/null 2>&1 || true
+      # v1.7.2: startwm.sh bawaan Ubuntu tidak menyiapkan D-Bus dan
+      # mewariskan XDG_*_HOME dari environment runner. Terbukti di #35:
+      # XDG_CONFIG_HOME=/home/runner/.config membuat xfce4-session gagal
+      # "Unable to load a failsafe session". Tulis ulang dengan
+      # environment sesi yang bersih + dbus-launch.
+      sudo tee /etc/xrdp/startwm.sh > /dev/null <<'EOF'
+#!/bin/sh
+if [ -r /etc/default/locale ]; then
+  . /etc/default/locale
+  export LANG LANGUAGE
+fi
+unset DBUS_SESSION_BUS_ADDRESS
+unset XDG_RUNTIME_DIR
+unset XDG_CONFIG_HOME
+unset XDG_DATA_HOME
+unset XDG_CACHE_HOME
+unset XDG_STATE_HOME
+export XDG_CONFIG_DIRS=/etc/xdg:${XDG_CONFIG_DIRS:-/etc/xdg}
+exec dbus-launch --exit-with-session startxfce4
+EOF
+      sudo chmod +x /etc/xrdp/startwm.sh
       case "${LINUX_MODE:-desktop}" in
         desktop-ringan)
           log "Varian ringan: memasang Firefox (repo resmi Mozilla, .deb) + LibreOffice..."
