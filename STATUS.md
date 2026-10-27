@@ -1,9 +1,9 @@
 # Status RDPfread
 
-- Aktif: false
+- Aktif: true
 - Mode: linux-desktop-ringan
-- Hostname: rdpfread-38
+- Hostname: rdpfread-39
 - IP Tailscale: 100.98.173.95
-- DNS: rdpfread-38.tail53ae5e.ts.net
-- Berakhir: 2026-10-27T20:39:12Z UTC
-- Diperbarui: 2026-10-27T20:37:05Z UTC
+- DNS: rdpfread-39.tail53ae5e.ts.net
+- Berakhir: 2026-10-28T02:19:17Z UTC
+- Diperbarui: 2026-10-27T20:40:24Z UTC
