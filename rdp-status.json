@@ -2,16 +2,16 @@
   "active": false,
   "mode": "linux-desktop-ringan",
   "os": "ubuntu-24.04",
-  "hostname": "rdpfread-35",
+  "hostname": "rdpfread-36",
   "tailscale_ip": "100.98.173.95",
   "dns_name": "rdpfread-35.tail53ae5e.ts.net",
   "rdp_user": "fread",
   "preset": "linux-desktop-ringan",
   "linux_mode": "desktop-ringan",
-  "started_at": "2026-10-27T08:04:37Z",
-  "expires_at": "2026-10-27T13:46:37Z",
+  "started_at": "2026-10-27T08:46:13Z",
+  "expires_at": "2026-10-27T14:28:13Z",
   "duration_menit": 342,
-  "run_number": "35",
-  "run_id": "40471026687",
-  "updated_at": "2026-10-27T08:45:33Z"
+  "run_number": "36",
+  "run_id": "40475812004",
+  "updated_at": "2026-10-27T09:15:45Z"
 }
