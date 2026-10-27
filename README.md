@@ -2,14 +2,33 @@
 
 [![Sesi RDPfread](https://github.com/qioceky/RDPfread/actions/workflows/rdp.yml/badge.svg)](https://github.com/qioceky/RDPfread/actions/workflows/rdp.yml)
 [![Validate](https://github.com/qioceky/RDPfread/actions/workflows/validate.yml/badge.svg)](https://github.com/qioceky/RDPfread/actions/workflows/validate.yml)
+![Windows](https://img.shields.io/badge/Windows-0078D6?logo=windows&logoColor=white)
+![Linux](https://img.shields.io/badge/Linux-FCC624?logo=linux&logoColor=black)
+![macOS](https://img.shields.io/badge/macOS-000000?logo=apple&logoColor=white)
 
-**Versi 1.7.0** — daftar perubahan lengkap ada di [UPGRADES.md](UPGRADES.md), panduan langkah demi langkah di [PANDUAN.md](PANDUAN.md).
+**Versi 1.7.0** — daftar perubahan lengkap ada di [CHANGELOG.md](CHANGELOG.md), panduan langkah demi langkah di [PANDUAN.md](PANDUAN.md).
 
 RDPfread mengubah satu runner **GitHub Actions** menjadi komputer remote pribadimu selama ±6 jam: pilih OS saat Run, sambungkan lewat **Tailscale privat**, kerja seperti di PC sendiri, lalu semua pekerjaanmu **tersimpan dan ikut pindah ke sesi berikutnya** secara otomatis. Satu workflow, tiga OS, tanpa server yang harus kamu rawat.
 
 > ⚠️ **Keamanan state:** state sesi disimpan ke Release & artifact repo agar pekerjaanmu tetap ada antar sesi. Gunakan **repository PRIVATE**, ATAU repository publik **hanya bila** secret `STATE_ENCRYPTION_KEY` diisi sehingga arsip state selalu terenkripsi AES-256 sebelum diunggah — tanpa enkripsi, state di repo publik bisa diunduh siapa pun. Perlu diingat repo publik juga membuka log Actions & branch status (IP/hostname sesi terlihat); akses remote-nya sendiri tetap hanya bisa dari tailnet + password.
 
 ---
+
+## Daftar isi
+
+- [Pilih OS-mu](#pilih-os-mu)
+- [Fitur unggulan](#fitur-unggulan)
+- [Cara kerja singkat](#1-cara-kerja-singkat)
+- [Mulai cepat](#mulai-cepat)
+- [Prasyarat](#2-prasyarat)
+- [Secrets](#3-secrets)
+- [Menjalankan sesi](#4-menjalankan-sesi)
+- [Berhenti dan perpanjangan](#5-berhenti-dan-perpanjangan)
+- [Struktur repository](#6-struktur-repository)
+- [Keamanan dan batasan](#7-keamanan-dan-batasan)
+- [Status live](#status-live)
+- [Rencana berikut](#rencana-berikut)
+- [Lapor masalah](#lapor-masalah)
 
 ## 🖥️ Pilih OS-mu
 
@@ -69,6 +88,12 @@ Setiap Run workflow, GitHub menyiapkan satu VM sementara (ephemeral). Alurnya sa
 7. **Keepalive** — sesi dijaga: detak tiap menit, publish status tiap 5 menit, checkpoint state tiap 15 menit, handover (dispatch sesi berikut + jeda acak 10–30 detik) 20 menit sebelum habis, auto-stop 3 menit sebelum batas 6 jam GitHub.
 8. **Finalize** — state final disimpan, status dimatikan, notifikasi berhenti dikirim, Tailscale logout.
 
+## 🚀 Mulai cepat
+
+1. Isi secrets wajib (`RDP_PASSWORD`, `TAILSCALE_AUTH_KEY`) — tambah `STATE_ENCRYPTION_KEY` bila repo publik.
+2. Tab **Actions → RDPfread — Sesi 6 Jam Pro (Windows/Linux/macOS) → Run workflow**, pilih OS, lalu **Run workflow**.
+3. Tunggu notifikasi "siap", lalu connect dari perangkat yang login ke tailnet yang sama — IP terbaru selalu ada di [branch `status`](#status-live).
+
 ## 2. Prasyarat
 
 - Repo ini (publik boleh, asal `STATE_ENCRYPTION_KEY` terisi — lihat kotak keamanan di atas; privat juga boleh).
@@ -105,7 +130,7 @@ Setiap Run workflow, GitHub menyiapkan satu VM sementara (ephemeral). Alurnya sa
    - **Terminal:** `ssh fread@100.x.x.x`, password sama (Linux/macOS selalu aktif; Windows bila `akses_ssh=ya` — shell PowerShell di Windows).
 5. Simpan file kerjamu di tempat yang persisten: **`C:\RDPData`** (Windows), **home user** (Linux/macOS) — hanya lokasi itu (+ folder profil user Windows) yang ikut tersimpan antar sesi.
 
-## 5. Berhenti & perpanjangan
+## 5. Berhenti dan perpanjangan
 
 - **Auto-stop:** 3 menit sebelum `expires_at`. Batas keras job GitHub: 360 menit.
 - **Perpanjangan otomatis** (`perpanjang_otomatis=ya`): sesi berikutnya di-dispatch ±20 menit sebelum habis dan memulihkan state (OS & pengaturan ikut diteruskan).
@@ -146,7 +171,7 @@ setup-wizard.ps1     # wizard setup lokal (Windows) via gh CLI
 setup-wizard.sh      # wizard setup lokal (Linux/Termux) via gh CLI
 ```
 
-## 7. Keamanan & batasan
+## 7. Keamanan dan batasan
 
 - Akses remote hanya dari tailnet (`100.64.0.0/10`) dengan NLA (Windows); runner tidak punya inbound publik untuk RDP/VNC.
 - Password & auth key hanya hidup sebagai Secrets — tidak ditulis ke log, status, atau arsip state.
@@ -157,3 +182,21 @@ setup-wizard.sh      # wizard setup lokal (Linux/Termux) via gh CLI
 - **Watermark "Test Mode" (Windows):** image GitHub mengaktifkan test signing, jadi pojok kanan bawah menampilkan "Test Mode". Menghilangkannya butuh `bcdedit testsigning off` + reboot — reboot mematikan sesi, jadi watermark ini sengaja dibiarkan (kosmetik, tanpa efek fungsi).
 - **Latensi:** runner GitHub umumnya di AS — dari Indonesia, latensi RDP ±200–250 ms + relay DERP adalah normal.
 - **macOS VNC:** aktivasi Screen Sharing + login VNC dari HP masih dalam tahap uji lapangan pertama; bila VNC gagal connect, laporkan log step setup macOS-nya.
+
+## 📡 Status live
+
+Sesi yang sedang berjalan (bila ada) bisa dipantau tanpa membuka log Actions:
+
+- Dashboard ringkas: [STATUS.md di branch `status`](https://github.com/qioceky/RDPfread/blob/status/STATUS.md)
+- Data mentah: [rdp-status.json di branch `status`](https://github.com/qioceky/RDPfread/blob/status/rdp-status.json) — IP/DNS Tailscale, OS, preset/mode, waktu berakhir, dan nomor run terbaru selalu ada di sini.
+
+## 🗺️ Rencana berikut
+
+- Uji lapangan VNC macOS (aktivasi Screen Sharing + login dari HP).
+- Uji varian desktop Linux (`desktop-ringan`/`desktop-dev`) sekaligus bukti ulang connect XRDP.
+- Opsi runner/mode baru di Panel aplikasi RDPfread XD (dispatch 1-tap).
+- Tes ulang preset game pasca-hardening hive v1.5.2 (tes ini menggantikan sesi yang sedang jalan).
+
+## 🐛 Lapor masalah
+
+Buka [Issue baru](https://github.com/qioceky/RDPfread/issues) dengan info: nomor run, OS/runner yang dipilih, langkah yang gagal, dan potongan log step terkait. Jangan pernah menempel password, auth key, atau kunci enkripsi state di Issue — ketiganya hanya hidup sebagai Secrets.

@@ -1,6 +1,10 @@
-# RDPfread v1.0 — Daftar Peningkatan
+# Changelog
 
-Perapihan total dari versi awal RDPfread (satu file workflow, dibuat 2026-10-10) menjadi project modular setara QVPS:
+Semua perubahan penting RDPfread, terbaru di atas. Versi saat ini: 1.7.0.
+
+## v1.0 (2026-10-20) — Perapihan total dari versi awal
+
+Perapihan total dari versi awal RDPfread (satu file workflow, dibuat 2026-10-10) menjadi project modular:
 
 ## Struktur & workflow
 1. **Modular** — dari 1 file `main.yml` menjadi workflow `rdp.yml` + 14 script PowerShell di `scripts/` + `config/`, masing-masing satu tugas dan bisa diuji terpisah.
