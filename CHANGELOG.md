@@ -52,6 +52,8 @@ Perapihan total dari versi awal RDPfread (satu file workflow, dibuat 2026-10-10)
 ## v1.7.4 (2026-10-27) — optimasi performa desktop Linux (lanjutan)
 53. **Warna sesi Linux dibatasi 16-bit (`max_bpp=16` di xrdp.ini).** Pemangkas bandwidth terbesar di sisi server untuk link HP jarak jauh: 32-bit menggandakan data gambar dibanding 16-bit tanpa manfaat nyata di layar HP (hanya gradasi halus yang sedikit banding). Bersama v1.7.3 (compositing nonaktif), ini paket optimasi Linux: sesi baru langsung ringan tanpa setelan manual di klien. Koneksi #35 sudah terverifikasi direct (bukan DERP), jadi optimasi menyasar rendering + bandwidth, bukan jaringan. Balikkan ke 32 bila warna penuh lebih penting daripada respons.
 
+Status 27 Okt 2026, 19:28 WIB: optimasi v1.7.3+v1.7.4 TIDAK mengatasi lag di lapangan (#37 tetap delay berat) — penyebab bukan compositing/warna; desktop Linux dinyatakan EKSPERIMENTAL (lihat README). Mode `polos` (SSH) tidak terpengaruh.
+
 ## v1.7.3 (2026-10-27) — optimasi performa desktop Linux
 52. **Compositing xfwm4 nonaktif secara default di `setup-linux.sh`.** Uji lapangan #35 melaporkan lag berat pada desktop-ringan; compositing (transparansi/bayangan) adalah beban rendering terbesar yang tidak perlu di sesi RDP. Setup kini menulis `use_compositing=false` ke default sistem `/etc/xdg/xfce4/xfconf/xfce-perchannel-xml/xfwm4.xml` (dipertahankan isi file yang sudah ada bila tersedia). Berlaku untuk sesi baru; sesi yang sedang jalan tetap perlu perintah manual `xfconf-query -c xfwm4 -p /general/use_compositing -s false`. Catatan: koneksi #35 sudah terverifikasi direct (bukan DERP relay), jadi optimasi ini menyasar sisi rendering, bukan jaringan.
 

@@ -23,6 +23,7 @@ Untuk notifikasi Telegram: buat bot via @BotFather → dapat token; kirim pesan 
 ## D. Jalankan
 1. Tab **Actions → RDPfread — Sesi 6 Jam Pro (Windows/Linux) → Run workflow**.
 2. Untuk pemakaian umum: runner `windows-2022`, preset `minimal`, timezone `Asia/Jakarta`, perpanjang `ya`.
+   - 🧪 **Desktop Linux berstatus EKSPERIMENTAL** (27 Okt 2026): bisa dipakai, tapi delay terasa berat di link jarak jauh meski sudah dioptimasi (compositing off + 16-bit); rekomendasi stabil tetap Windows. Mode `polos` (SSH saja) tidak terpengaruh.
    - Mau Linux desktop → runner `ubuntu-24.04` + `linux_mode=desktop`: dapat XFCE4 lewat RDP (:3389) + SSH, user & password sama seperti sesi Windows.
    - Mau Linux desktop ringan → runner `ubuntu-24.04` + `linux_mode=desktop-ringan`: XFCE4 + Firefox + LibreOffice lewat RDP.
    - Mau Linux desktop dev → runner `ubuntu-24.04` + `linux_mode=desktop-dev`: XFCE4 + VS Code (Git/Node/Python sudah bawaan image) lewat RDP.
