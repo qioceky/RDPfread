@@ -26,11 +26,11 @@ on:
         type: choice
         options: [windows-2022, windows-2025, windows-latest, ubuntu-24.04, ubuntu-22.04, ubuntu-latest]
       linux_mode:
-        description: 'Mode Linux (hanya berlaku bila runner Ubuntu): desktop = XFCE4 + XRDP (RDP :3389) + SSH, polos = SSH saja tanpa desktop'
+        description: 'Mode Linux (hanya berlaku bila runner Ubuntu): desktop = XFCE4 + XRDP (RDP :3389) + SSH | desktop-ringan = desktop + Firefox + LibreOffice | desktop-dev = desktop + VS Code (Git/Node/Python sudah bawaan image) | polos = SSH saja tanpa desktop'
         required: false
         default: 'desktop'
         type: choice
-        options: [desktop, polos]
+        options: [desktop, desktop-ringan, desktop-dev, polos]
       fps:
         description: 'Target FPS RDP Windows (120 = interval frame DWM 8 ms; Minecraft memang sudah 120). Linux tidak terpengaruh'
         required: false

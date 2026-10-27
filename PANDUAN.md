@@ -24,6 +24,8 @@ Untuk notifikasi Telegram: buat bot via @BotFather → dapat token; kirim pesan 
 1. Tab **Actions → RDPfread — Sesi 6 Jam Pro (Windows/Linux) → Run workflow**.
 2. Untuk pemakaian umum: runner `windows-2022`, preset `minimal`, timezone `Asia/Jakarta`, perpanjang `ya`.
    - Mau Linux desktop → runner `ubuntu-24.04` + `linux_mode=desktop`: dapat XFCE4 lewat RDP (:3389) + SSH, user & password sama seperti sesi Windows.
+   - Mau Linux desktop ringan → runner `ubuntu-24.04` + `linux_mode=desktop-ringan`: XFCE4 + Firefox + LibreOffice lewat RDP.
+   - Mau Linux desktop dev → runner `ubuntu-24.04` + `linux_mode=desktop-dev`: XFCE4 + VS Code (Git/Node/Python sudah bawaan image) lewat RDP.
    - Mau Linux terminal saja → runner `ubuntu-24.04` + `linux_mode=polos`: SSH murni, paling ringan. Home + identitas Tailscale-mu tersimpan antar sesi Linux.
    - Mau RDP Windows lebih mulus → input `fps=120` (menaikkan plafon frame sesi RDP; hasil nyata tergantung aplikasi klien & jaringan).
    - Butuh Node/Python → preset `web`.

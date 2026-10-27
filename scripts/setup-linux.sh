@@ -1,10 +1,13 @@
 #!/usr/bin/env bash
-# setup-linux.sh - sesi Linux RDPfread (v1.4.0), dipanggil workflow rdp.yml
+# setup-linux.sh - sesi Linux RDPfread (v1.6.0), dipanggil workflow rdp.yml
 # bila runner Ubuntu. Tiga fase (satu step workflow per fase):
 #   --setup     : user + password (secret RDP_PASSWORD), timezone, restore
 #                 state, Tailscale, lalu mode:
-#                   desktop = XFCE4 + XRDP (:3389) + SSH (:22)
-#                   polos   = SSH saja, tanpa desktop
+#                   desktop        = XFCE4 + XRDP (:3389) + SSH (:22)
+#                   desktop-ringan = desktop + Firefox + LibreOffice
+#                   desktop-dev    = desktop + VS Code (Git/Node/Python
+#                                    sudah bawaan image runner)
+#                   polos          = SSH saja, tanpa desktop
 #                 Akhiri dengan publish status + notifikasi "ready".
 #   --keepalive : detak 1 menit (publish 5 mnt, checkpoint state 15 mnt,
 #                 reconnect Tailscale otomatis, dispatch estafet 20 mnt
@@ -70,7 +73,7 @@ data.update({
     "tailscale_ip": ip,
     "dns_name": dns,
     "rdp_user": os.environ.get("RDP_USER", ""),
-    "preset": "linux",
+    "preset": os.environ.get("RDPFREAD_MODE", "linux"),
     "linux_mode": os.environ.get("LINUX_MODE", "desktop"),
     "started_at": started,
     "expires_at": expires,
@@ -216,6 +219,25 @@ restore_state() {
   fi
 }
 
+# Firefox .deb resmi dari repo Mozilla (v1.6.0): paket apt Ubuntu 24.04
+# untuk firefox hanya stub snap - di sesi XRDP, snap bisa rewel; .deb
+# Mozilla menghindari itu. Best effort: gagal = warn, setup tetap lanjut.
+install_firefox_deb() {
+  sudo install -d -m 0755 /etc/apt/keyrings 2>/dev/null || { warn "Buat /etc/apt/keyrings gagal - Firefox dilewati"; return 0; }
+  if ! curl -fsSL https://packages.mozilla.org/apt/repo-signing-key.gpg 2>/dev/null | sudo gpg --dearmor -o /etc/apt/keyrings/packages.mozilla.org.gpg 2>/dev/null; then
+    warn "Kunci repo Mozilla gagal diunduh - Firefox dilewati"
+    return 0
+  fi
+  echo "deb [signed-by=/etc/apt/keyrings/packages.mozilla.org.gpg] https://packages.mozilla.org/apt mozilla main" | sudo tee /etc/apt/sources.list.d/mozilla.list >/dev/null 2>&1
+  printf '%s\n' 'Package: *' 'Pin: origin packages.mozilla.org' 'Pin-Priority: 1000' | sudo tee /etc/apt/preferences.d/mozilla >/dev/null 2>&1
+  sudo apt-get update -qq >/dev/null 2>&1 || true
+  local ok=0 i
+  for i in 1 2; do
+    if DEBIAN_FRONTEND=noninteractive sudo apt-get install -y -qq firefox >/dev/null 2>&1; then ok=1; break; fi
+  done
+  [ "$ok" = "1" ] || warn "Install Firefox bermasalah - XFCE tetap jalan"
+}
+
 # ---------- fase setup ----------
 do_setup() {
   mkdir -p "$OUT"
@@ -268,29 +290,55 @@ do_setup() {
   sudo systemctl enable ssh >/dev/null 2>&1 || true
   sudo systemctl restart ssh >/dev/null 2>&1 || sudo service ssh restart >/dev/null 2>&1 || true
 
-  if [ "${LINUX_MODE:-desktop}" = "desktop" ]; then
-    log "Memasang XFCE4 + XRDP (bisa beberapa menit)..."
-    local ok=0
-    for i in 1 2; do
-      if DEBIAN_FRONTEND=noninteractive sudo apt-get install -y -qq xfce4 xfce4-goodies xfce4-terminal xrdp xorgxrdp dbus-x11 >/dev/null 2>&1; then ok=1; break; fi
-      sudo apt-get update -qq >/dev/null 2>&1 || true
-    done
-    [ "$ok" = "1" ] || warn "Install XFCE4/XRDP bermasalah - periksa log step ini"
-    echo "xfce4-session" | sudo -u "$user" tee "/home/$user/.xsession" >/dev/null
-    sudo sed -i 's/^max_bpp=.*/max_bpp=32/' /etc/xrdp/xrdp.ini 2>/dev/null || true
-    sudo sed -i 's/^tcp_nodelay=.*/tcp_nodelay=true/' /etc/xrdp/xrdp.ini 2>/dev/null || true
-    sudo adduser xrdp ssl-cert >/dev/null 2>&1 || true
-    sudo systemctl enable xrdp xrdp-sesman >/dev/null 2>&1 || true
-    sudo systemctl restart xrdp-sesman xrdp >/dev/null 2>&1 || warn "Start XRDP gagal"
-    log "Desktop XFCE4 + XRDP siap di port 3389."
-  else
-    DEBIAN_FRONTEND=noninteractive sudo apt-get install -y -qq tmux htop git curl >/dev/null 2>&1 || true
-    log "Mode polos: SSH saja (port 22), tanpa desktop."
-  fi
+  case "${LINUX_MODE:-desktop}" in
+    desktop*)
+      log "Memasang XFCE4 + XRDP (bisa beberapa menit)..."
+      local ok=0
+      for i in 1 2; do
+        if DEBIAN_FRONTEND=noninteractive sudo apt-get install -y -qq xfce4 xfce4-goodies xfce4-terminal xrdp xorgxrdp dbus-x11 >/dev/null 2>&1; then ok=1; break; fi
+        sudo apt-get update -qq >/dev/null 2>&1 || true
+      done
+      [ "$ok" = "1" ] || warn "Install XFCE4/XRDP bermasalah - periksa log step ini"
+      echo "xfce4-session" | sudo -u "$user" tee "/home/$user/.xsession" >/dev/null
+      sudo sed -i 's/^max_bpp=.*/max_bpp=32/' /etc/xrdp/xrdp.ini 2>/dev/null || true
+      sudo sed -i 's/^tcp_nodelay=.*/tcp_nodelay=true/' /etc/xrdp/xrdp.ini 2>/dev/null || true
+      sudo adduser xrdp ssl-cert >/dev/null 2>&1 || true
+      case "${LINUX_MODE:-desktop}" in
+        desktop-ringan)
+          log "Varian ringan: memasang Firefox (repo resmi Mozilla, .deb) + LibreOffice..."
+          install_firefox_deb
+          local ok2=0
+          for i in 1 2; do
+            if DEBIAN_FRONTEND=noninteractive sudo apt-get install -y -qq libreoffice >/dev/null 2>&1; then ok2=1; break; fi
+            sudo apt-get update -qq >/dev/null 2>&1 || true
+          done
+          [ "$ok2" = "1" ] || warn "Install LibreOffice bermasalah - Firefox/XFCE tetap jalan"
+          ;;
+        desktop-dev)
+          log "Varian dev: memasang VS Code (Git/Node/Python sudah bawaan image runner)..."
+          local code_deb; code_deb="$(mktemp -d)/code.deb"
+          if curl -fsSL -o "$code_deb" "https://code.visualstudio.com/sha/download?build=stable&os=linux-deb-x64" 2>/dev/null; then
+            sudo dpkg -i "$code_deb" >/dev/null 2>&1 || sudo apt-get install -f -y -qq >/dev/null 2>&1 || warn "Install VS Code bermasalah"
+          else
+            warn "Unduh VS Code gagal - varian dev jalan tanpa VS Code"
+          fi
+          ;;
+      esac
+      sudo systemctl enable xrdp xrdp-sesman >/dev/null 2>&1 || true
+      sudo systemctl restart xrdp-sesman xrdp >/dev/null 2>&1 || warn "Start XRDP gagal"
+      log "Desktop XFCE4 + XRDP siap di port 3389 (varian: ${LINUX_MODE:-desktop})."
+      ;;
+    *)
+      DEBIAN_FRONTEND=noninteractive sudo apt-get install -y -qq tmux htop git curl >/dev/null 2>&1 || true
+      log "Mode polos: SSH saja (port 22), tanpa desktop."
+      ;;
+  esac
 
   publish_status "true" "$ip" "$dns"
   local cara="SSH ke ${ip} (user $user)"
-  [ "${LINUX_MODE:-desktop}" = "desktop" ] && cara="RDP ke ${ip} atau SSH (user $user)"
+  case "${LINUX_MODE:-desktop}" in
+    desktop*) cara="RDP ke ${ip} atau SSH (user $user)" ;;
+  esac
   notify "siap" "$cara | berakhir $(iso_at "$EXPIRES_EPOCH") UTC | mode $MODE"
   log "Setup Linux selesai - sesi siap dipakai."
 }
