@@ -1,6 +1,6 @@
 # Changelog
 
-Semua perubahan penting RDPfread, terbaru di atas. Versi saat ini: 1.7.0.
+Semua perubahan penting RDPfread, terbaru di atas. Versi saat ini: 1.7.4.
 
 ## v1.0 (2026-10-20) — Perapihan total dari versi awal
 

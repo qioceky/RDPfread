@@ -6,7 +6,7 @@
 ![Linux](https://img.shields.io/badge/Linux-FCC624?logo=linux&logoColor=black)
 ![macOS](https://img.shields.io/badge/macOS-000000?logo=apple&logoColor=white)
 
-**Versi 1.7.0** — daftar perubahan lengkap ada di [CHANGELOG.md](CHANGELOG.md), panduan langkah demi langkah di [PANDUAN.md](PANDUAN.md).
+**Versi 1.7.4** — daftar perubahan lengkap ada di [CHANGELOG.md](CHANGELOG.md), panduan langkah demi langkah di [PANDUAN.md](PANDUAN.md).
 
 RDPfread mengubah satu runner **GitHub Actions** menjadi komputer remote pribadimu selama ±6 jam: pilih OS saat Run, sambungkan lewat **Tailscale privat**, kerja seperti di PC sendiri, lalu semua pekerjaanmu **tersimpan dan ikut pindah ke sesi berikutnya** secara otomatis. Satu workflow, tiga OS, tanpa server yang harus kamu rawat.
 
@@ -182,7 +182,7 @@ setup-wizard.sh      # wizard setup lokal (Linux/Termux) via gh CLI
 - Batas artifact mengikuti plan GitHub (Free 500 MB); arsip state di atas ±1,9 GB dilewati untuk Release.
 - Gunakan auth key Tailscale yang bisa dicabut (reusable + ephemeral lebih aman), dan cabut bila perangkat hilang.
 - **Watermark "Test Mode" (Windows):** image GitHub mengaktifkan test signing, jadi pojok kanan bawah menampilkan "Test Mode". Menghilangkannya butuh `bcdedit testsigning off` + reboot — reboot mematikan sesi, jadi watermark ini sengaja dibiarkan (kosmetik, tanpa efek fungsi).
-- **Latensi:** runner GitHub umumnya di AS — dari Indonesia, latensi RDP ±200–250 ms + relay DERP adalah normal.
+- **Latensi:** runner GitHub umumnya di AS — dari Indonesia, latensi RDP ±200–250 ms adalah normal; koneksi Tailscale bisa direct (peer-to-peer) atau lewat relay DERP.
 - **macOS VNC — BELUM SUPPORT (27 Okt 2026):** uji lapangan pertama membuktikan display hitam di semua klien (AVNC, RealVNC) meski koneksi + autentikasi lolos, setelah restart agen, allow-all-users, dan reset WindowServer. Penyebab display belum teridentifikasi; SSH macOS jalan normal. Dukungan VNC macOS ditahan sampai display terpecahkan.
 
 ## 📡 Status live
