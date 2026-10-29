@@ -1,5 +1,5 @@
 {
-  "active": true,
+  "active": false,
   "mode": "linux-desktop-ringan",
   "os": "ubuntu-24.04",
   "hostname": "rdpfread-44",
@@ -13,5 +13,5 @@
   "duration_menit": 342,
   "run_number": "44",
   "run_id": "40795895521",
-  "updated_at": "2026-10-29T06:37:34Z"
+  "updated_at": "2026-10-29T06:42:51Z"
 }
